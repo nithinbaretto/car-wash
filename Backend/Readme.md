@@ -30,7 +30,7 @@ firebase emulators:start --only functions,firestore
 The health-check endpoint is available at:
 
 ```text
-http://127.0.0.1:5001/YOUR_FIREBASE_PROJECT_ID/asia-south1/api/health
+http://127.0.0.1:5002/YOUR_FIREBASE_PROJECT_ID/asia-south1/api/health
 ```
 
 ## Deploy
