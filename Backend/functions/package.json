@@ -1,0 +1,21 @@
+{
+  "name": "car-wash-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "lint": "node --check index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.1",
+    "firebase-functions": "^6.2.0",
+    "geofire-common": "^6.0.0"
+  }
+}

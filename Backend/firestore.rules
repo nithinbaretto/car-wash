@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The mobile apps should access data through authenticated API endpoints
+    // until collection-specific rules are defined.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

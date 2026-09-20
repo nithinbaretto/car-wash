@@ -1,0 +1,22 @@
+# Node.js dependencies and generated output
+functions/node_modules/
+functions/lib/
+functions/coverage/
+
+# Local environment configuration and Firebase emulator data
+.env
+.env.*
+!.env.example
+service-account*.json
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+firestore-debug.*.log
+ui-debug.log
+*.local
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
