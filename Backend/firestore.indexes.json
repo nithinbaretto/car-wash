@@ -1,0 +1,73 @@
+{
+  "indexes": [
+    {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"carWashId","order":"ASCENDING"},{"fieldPath":"availabilityDate","order":"ASCENDING"},{"fieldPath":"scheduledAt","order":"ASCENDING"}]},
+    {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"carWashId","order":"ASCENDING"},{"fieldPath":"availabilityDate","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"scheduledAt","order":"ASCENDING"}]},
+    {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"recipientUid","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
+    {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"recipientUid","order":"ASCENDING"},{"fieldPath":"type","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
+    {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"recipientUid","order":"ASCENDING"},{"fieldPath":"isRead","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
+    {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"recipientUid","order":"ASCENDING"},{"fieldPath":"type","order":"ASCENDING"},{"fieldPath":"isRead","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
+    {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"customerId","order":"ASCENDING"},{"fieldPath":"customerListTab","order":"ASCENDING"},{"fieldPath":"scheduledAt","order":"ASCENDING"}]},
+    {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"customerId","order":"ASCENDING"},{"fieldPath":"customerListTab","order":"ASCENDING"},{"fieldPath":"completedAt","order":"DESCENDING"}]},
+    {
+      "collectionGroup": "carWashes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "geohash",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "carWashes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "categories",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "geohash",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "carWashes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ownerUids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "services",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "active",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "priceMinor",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
