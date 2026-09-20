@@ -19,6 +19,8 @@ abstract final class MockData {
       priceFrom: 250,
       services: ['Car wash', 'Detailing', 'Interior cleaning'],
       address: '12, 5th Cross, Koramangala, Bengaluru',
+      latitude: 12.9352,
+      longitude: 77.6245,
       about:
           'Premium hand wash and detailing. Live bay availability so you can skip the queue and get back on the road.',
     ),
@@ -35,6 +37,8 @@ abstract final class MockData {
       priceFrom: 199,
       services: ['Car wash', 'Wax', 'Interior cleaning'],
       address: 'Indiranagar 100 Feet Road, Bengaluru',
+      latitude: 12.9784,
+      longitude: 77.6408,
       about:
           'Fast exterior wash with ceramic options. Ideal for daily drivers who want a reliable slot.',
     ),
@@ -51,6 +55,8 @@ abstract final class MockData {
       priceFrom: 349,
       services: ['Detailing', 'Premium', 'Interior cleaning'],
       address: 'HSR Layout, Sector 4, Bengaluru',
+      latitude: 12.9121,
+      longitude: 77.6446,
       about:
           'Studio-grade detailing for interiors and paint correction. Book premium bays in advance.',
     ),

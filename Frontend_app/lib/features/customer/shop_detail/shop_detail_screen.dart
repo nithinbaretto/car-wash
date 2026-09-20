@@ -5,6 +5,8 @@ import '../../../core/models/booking.dart';
 import '../../../core/models/shop.dart';
 import '../../../core/services/app_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/brand_mark.dart';
 import '../../../core/widgets/buttons.dart';
 
 class ShopDetailScreen extends StatelessWidget {
@@ -26,7 +28,7 @@ class ShopDetailScreen extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 11,
-                child: Image.network(shop.imageUrl, fit: BoxFit.cover),
+                child: Image.asset(AppAssets.carWashCard, fit: BoxFit.cover),
               ),
               SafeArea(
                 child: Padding(
@@ -55,15 +57,12 @@ class ShopDetailScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         shop.name,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: AppText.display(size: 24),
                       ),
                     ),
                     Text(
                       shop.isOpen ? 'Open' : 'Closed',
-                      style: GoogleFonts.montserrat(
+                      style: GoogleFonts.figtree(
                         color: shop.isOpen ? AppColors.open : AppColors.muted,
                         fontWeight: FontWeight.w700,
                       ),
@@ -71,23 +70,23 @@ class ShopDetailScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(shop.address, style: GoogleFonts.montserrat(color: AppColors.muted)),
+                Text(shop.address, style: GoogleFonts.figtree(color: AppColors.muted)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     const Icon(Icons.star, color: Color(0xFFF5B400), size: 18),
                     Text(
                       '  ${shop.rating}  (${shop.reviewCount})',
-                      style: GoogleFonts.montserrat(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      '  ·  ${shop.distanceKm} km',
-                      style: GoogleFonts.montserrat(color: AppColors.muted),
+                      '  ·  ${shop.distanceLabel(fromLat: session.location?.latitude, fromLng: session.location?.longitude)}',
+                      style: GoogleFonts.figtree(color: AppColors.muted),
                     ),
                   ],
                 ),
                 const SizedBox(height: 18),
-                Text('Services', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text('Services', style: GoogleFonts.figtree(fontWeight: FontWeight.w700, fontSize: 16)),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -103,9 +102,9 @@ class ShopDetailScreen extends StatelessWidget {
                       .toList(),
                 ),
                 const SizedBox(height: 18),
-                Text('About', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text('About', style: GoogleFonts.figtree(fontWeight: FontWeight.w700, fontSize: 16)),
                 const SizedBox(height: 8),
-                Text(shop.about, style: GoogleFonts.montserrat(color: AppColors.muted, height: 1.45)),
+                Text(shop.about, style: GoogleFonts.figtree(color: AppColors.muted, height: 1.45)),
                 const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -120,17 +119,17 @@ class ShopDetailScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Next available', style: GoogleFonts.montserrat(color: AppColors.muted, fontSize: 12)),
+                          Text('Next available', style: GoogleFonts.figtree(color: AppColors.muted, fontSize: 12)),
                           Text(
                             shop.nextAvailable,
-                            style: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
+                            style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
                       const Spacer(),
                       Text(
                         'From ${shop.priceFrom}\$',
-                        style: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),

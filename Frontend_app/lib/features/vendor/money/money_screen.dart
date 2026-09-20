@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/services/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 
 class MoneyScreen extends StatelessWidget {
   const MoneyScreen({super.key});
@@ -16,12 +17,12 @@ class MoneyScreen extends StatelessWidget {
         children: [
           Text(
             'Money',
-            style: GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w800),
+            style: AppText.display(),
           ),
           const SizedBox(height: 4),
           Text(
             'Earnings snapshot · mock figures',
-            style: GoogleFonts.montserrat(color: AppColors.muted),
+            style: GoogleFonts.figtree(color: AppColors.muted),
           ),
           const SizedBox(height: 20),
           Container(
@@ -33,14 +34,10 @@ class MoneyScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Today', style: GoogleFonts.montserrat(color: Colors.white70)),
+                Text('Today', style: GoogleFonts.figtree(color: Colors.white70)),
                 Text(
                   '₹ ${data.today}',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: AppText.display(size: 32, color: Colors.white),
                 ),
               ],
             ),
@@ -63,9 +60,9 @@ class MoneyScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(label, style: GoogleFonts.montserrat(color: AppColors.muted)),
+          Text(label, style: GoogleFonts.figtree(color: AppColors.muted)),
           const Spacer(),
-          Text(value, style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
+          Text(value, style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
         ],
       ),
     );

@@ -9,6 +9,7 @@ import 'features/auth/otp_screen.dart';
 import 'features/auth/role_screen.dart';
 import 'features/auth/splash_screen.dart';
 import 'features/customer/customer_shell.dart';
+import 'features/customer/location/location_picker_screen.dart';
 import 'features/customer/notifications/notifications_screen.dart';
 import 'features/customer/shop_detail/shop_detail_screen.dart';
 import 'features/vendor/onboarding/vendor_onboarding_screen.dart';
@@ -40,6 +41,11 @@ class _CarWashAppState extends State<CarWashApp> {
           LoginScreen.route: (_) => const LoginScreen(),
           OtpScreen.route: (_) => const OtpScreen(),
           CustomerShell.route: (_) => const CustomerShell(),
+          LocationPickerScreen.route: (context) {
+            final changing =
+                ModalRoute.of(context)?.settings.arguments == true;
+            return LocationPickerScreen(changing: changing);
+          },
           NotificationsScreen.route: (_) => const NotificationsScreen(),
           VendorOnboardingScreen.route: (_) => const VendorOnboardingScreen(),
           VendorShell.route: (_) => const VendorShell(),

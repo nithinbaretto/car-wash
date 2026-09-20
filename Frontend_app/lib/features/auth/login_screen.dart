@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/models/user_role.dart';
 import '../../core/services/app_session.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/brand_mark.dart';
 import '../../core/widgets/buttons.dart';
-import '../customer/customer_shell.dart';
-import '../vendor/onboarding/vendor_onboarding_screen.dart';
 import 'otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,12 +20,23 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _name = TextEditingController(text: 'Shamil P');
   final _phone = TextEditingController();
+  final _nameFocus = FocusNode();
+  final _phoneFocus = FocusNode();
   bool _accepted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocus.addListener(() => setState(() {}));
+    _phoneFocus.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
     _name.dispose();
     _phone.dispose();
+    _nameFocus.dispose();
+    _phoneFocus.dispose();
     super.dispose();
   }
 
@@ -43,186 +52,347 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushNamed(OtpScreen.route);
   }
 
-  void _socialLogin() {
-    final session = SessionScope.of(context);
-    session.setProfile(
-      name: _name.text.trim().isEmpty ? 'Raghavendra' : _name.text.trim(),
-      phone: _phone.text.trim().isEmpty ? '8865745553' : _phone.text.trim(),
-    );
-    session.completeLogin();
-    final route = session.role == UserRole.vendor
-        ? VendorOnboardingScreen.route
-        : CustomerShell.route;
-    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final inset = MediaQuery.viewInsetsOf(context).bottom;
+
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AppBackCircle(),
-              const SizedBox(height: 28),
-              Text(
-                'Let’s get started',
-                style: GoogleFonts.montserrat(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Enter your mobile number to\ncontinue.',
-                style: GoogleFonts.montserrat(fontSize: 16, color: AppColors.muted),
-              ),
-              const SizedBox(height: 28),
-              TextField(
-                controller: _name,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  labelText: 'Your name',
-                  labelStyle: GoogleFonts.montserrat(color: AppColors.mutedLight, fontSize: 12),
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _phone,
-                onChanged: (_) => setState(() {}),
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '+91',
-                          style: GoogleFonts.montserrat(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 22,
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          color: AppColors.fieldBorder,
-                        ),
-                      ],
-                    ),
-                  ),
-                  hintText: 'Enter mobile number',
-                  hintStyle: GoogleFonts.montserrat(color: AppColors.mutedLight),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
+      backgroundColor: AppColors.primaryDeep,
+      resizeToAvoidBottomInset: true,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 24, 20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Checkbox(
-                      value: _accepted,
-                      activeColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                  Row(
+                    children: [
+                      AppBackCircle(
+                        onTap: () => Navigator.of(context).maybePop(),
                       ),
-                      onChanged: (value) => setState(() => _accepted = value ?? false),
+                      const Spacer(),
+                      const BrandMark(size: 36),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'Let’s get\nstarted',
+                    style: AppText.display(
+                      size: 40,
+                      height: 1.05,
+                      letterSpacing: -1,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Enter your mobile number to continue.',
+                    style: AppText.ui(
+                      size: 15,
+                      height: 1.4,
+                      color: Colors.white.withValues(alpha: 0.72),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              child: Column(
+                children: [
                   Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        text: 'I have read and accept the\n',
-                        style: GoogleFonts.montserrat(fontSize: 13, color: AppColors.ink),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: 'terms and conditions',
-                            style: GoogleFonts.montserrat(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                          Text(
+                            'Your name',
+                            style: AppText.ui(
+                              size: 13,
+                              weight: FontWeight.w600,
+                              color: AppColors.muted,
                             ),
                           ),
-                          const TextSpan(text: ' and\n'),
-                          TextSpan(
-                            text: 'privacy policy.',
-                            style: GoogleFonts.montserrat(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(height: 8),
+                          _InputShell(
+                            focused: _nameFocus.hasFocus,
+                            child: TextField(
+                              controller: _name,
+                              focusNode: _nameFocus,
+                              onChanged: (_) => setState(() {}),
+                              textCapitalization: TextCapitalization.words,
+                              style: AppText.ui(
+                                size: 17,
+                                weight: FontWeight.w600,
+                              ),
+                              decoration: InputDecoration(
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: 'Your full name',
+                                hintStyle: AppText.ui(
+                                  size: 17,
+                                  color: AppColors.mutedLight,
+                                ),
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(right: 12),
+                                  child: Icon(
+                                    Icons.person_outline_rounded,
+                                    color: AppColors.mutedLight,
+                                    size: 22,
+                                  ),
+                                ),
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 0,
+                                  minHeight: 0,
+                                ),
+                              ),
                             ),
+                          ),
+                          const SizedBox(height: 22),
+                          Row(
+                            children: [
+                              Text(
+                                'Mobile number',
+                                style: AppText.ui(
+                                  size: 13,
+                                  weight: FontWeight.w600,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${_phone.text.length}/10',
+                                style: AppText.ui(
+                                  size: 12,
+                                  weight: FontWeight.w600,
+                                  color: _phone.text.length == 10
+                                      ? AppColors.open
+                                      : AppColors.mutedLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const _CountryChip(),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _InputShell(
+                                  focused: _phoneFocus.hasFocus,
+                                  child: TextField(
+                                    controller: _phone,
+                                    focusNode: _phoneFocus,
+                                    onChanged: (_) => setState(() {}),
+                                    keyboardType: TextInputType.phone,
+                                    style: AppText.ui(
+                                      size: 18,
+                                      weight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(10),
+                                    ],
+                                    decoration: InputDecoration(
+                                      filled: false,
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                      hintText: '00000 00000',
+                                      hintStyle: AppText.ui(
+                                        size: 18,
+                                        weight: FontWeight.w600,
+                                        letterSpacing: 0.8,
+                                        color: AppColors.mutedLight,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          _TermsTile(
+                            accepted: _accepted,
+                            onTap: () => setState(() => _accepted = !_accepted),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: SizedBox(
-                  width: 260,
-                  child: AppPrimaryButton(
-                    label: 'Send OTP',
-                    onPressed: _canSend ? _sendOtp : null,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('OR', style: GoogleFonts.montserrat(color: AppColors.muted)),
+                    padding: EdgeInsets.fromLTRB(24, 8, 24, 16 + inset),
+                    child: Column(
+                      children: [
+                        AppPrimaryButton(
+                          label: 'Send OTP',
+                          trailing: const Icon(Icons.arrow_forward_rounded),
+                          onPressed: _canSend ? _sendOtp : null,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'We’ll send a 6-digit code to verify your number.',
+                          textAlign: TextAlign.center,
+                          style: AppText.ui(
+                            size: 13,
+                            color: AppColors.mutedLight,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Expanded(child: Divider()),
                 ],
               ),
-              const SizedBox(height: 18),
-              AppSocialButton(
-                label: 'Sign in with Google',
-                icon: const _GoogleMark(),
-                onPressed: _socialLogin,
-              ),
-              const SizedBox(height: 12),
-              AppSocialButton(
-                label: 'Sign in with Apple',
-                icon: const Icon(Icons.apple, size: 22),
-                onPressed: _socialLogin,
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _GoogleMark extends StatelessWidget {
-  const _GoogleMark();
+class _InputShell extends StatelessWidget {
+  const _InputShell({required this.focused, required this.child});
+
+  final bool focused;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return const CircleAvatar(
-      radius: 10,
-      backgroundColor: Colors.white,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: focused ? const Color(0xFFF7FBFF) : AppColors.canvas,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: focused ? AppColors.primary : AppColors.border,
+          width: focused ? 1.6 : 1,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CountryChip extends StatelessWidget {
+  const _CountryChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      alignment: Alignment.center,
       child: Text(
-        'G',
-        style: TextStyle(
-          color: Color(0xFF4285F4),
-          fontWeight: FontWeight.w800,
-          fontSize: 13,
+        '+91',
+        style: AppText.ui(size: 16, weight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _TermsTile extends StatelessWidget {
+  const _TermsTile({required this.accepted, required this.onTap});
+
+  final bool accepted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: accepted ? AppColors.primarySoft : AppColors.canvas,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accepted ? AppColors.primary : Colors.white,
+                  border: Border.all(
+                    color: accepted ? AppColors.primary : AppColors.fieldBorder,
+                    width: 1.5,
+                  ),
+                ),
+                child: accepted
+                    ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text: 'I have read and accept the ',
+                    style: AppText.ui(
+                      size: 13,
+                      height: 1.4,
+                      color: AppColors.ink,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'terms and conditions',
+                        style: AppText.ui(
+                          size: 13,
+                          height: 1.4,
+                          color: AppColors.primary,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' and ',
+                        style: AppText.ui(
+                          size: 13,
+                          height: 1.4,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'privacy policy.',
+                        style: AppText.ui(
+                          size: 13,
+                          height: 1.4,
+                          color: AppColors.primary,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

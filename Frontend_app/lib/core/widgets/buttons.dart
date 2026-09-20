@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 abstract final class AppButtons {
-  static const radius = 16.0;
-  static const height = 52.0;
+  static const radius = 14.0;
+  static const height = 56.0;
 
   static RoundedRectangleBorder get shape => RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
@@ -29,33 +29,45 @@ class AppPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
-    return SizedBox(
-      height: AppButtons.height,
-      width: width,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor:
-              enabled ? AppColors.primary : AppColors.primary.withValues(alpha: 0.35),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.35),
-          disabledForegroundColor: Colors.white,
-          elevation: 0,
-          shape: AppButtons.shape,
-          textStyle: GoogleFonts.montserrat(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 180),
+      opacity: enabled ? 1 : 0.42,
+      child: SizedBox(
+        height: AppButtons.height,
+        width: width,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: AppColors.primary,
+            disabledForegroundColor: Colors.white,
+            shape: AppButtons.shape,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label),
-            if (trailing != null) ...[
-              const SizedBox(width: 6),
-              trailing!,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: AppText.ui(
+                  size: 16,
+                  weight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.2,
+                  height: 1,
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 8),
+                IconTheme(
+                  data: const IconThemeData(color: Colors.white, size: 18),
+                  child: trailing!,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -63,7 +75,7 @@ class AppPrimaryButton extends StatelessWidget {
 }
 
 class AppBackCircle extends StatelessWidget {
-  const AppBackCircle({super.key, this.onTap, this.size = 46});
+  const AppBackCircle({super.key, this.onTap, this.size = 42});
 
   final VoidCallback? onTap;
   final double size;
@@ -78,52 +90,16 @@ class AppBackCircle extends StatelessWidget {
         child: Ink(
           width: size,
           height: size,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.backCircle,
+            color: AppColors.background,
+            border: Border.all(color: AppColors.border),
           ),
-          child: Icon(Icons.chevron_left, size: size * 0.5, color: AppColors.ink),
-        ),
-      ),
-    );
-  }
-}
-
-class AppSocialButton extends StatelessWidget {
-  const AppSocialButton({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final Widget icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: AppButtons.height,
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.ink,
-          side: const BorderSide(color: AppColors.fieldBorder),
-          shape: AppButtons.shape,
-          textStyle: GoogleFonts.montserrat(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: size * 0.38,
+            color: AppColors.ink,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 10),
-            Text(label),
-          ],
         ),
       ),
     );

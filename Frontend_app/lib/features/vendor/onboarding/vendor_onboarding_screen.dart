@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/buttons.dart';
 import '../vendor_shell.dart';
+import '../../../core/theme/app_typography.dart';
 
 class VendorOnboardingScreen extends StatelessWidget {
   const VendorOnboardingScreen({super.key});
@@ -22,12 +23,12 @@ class VendorOnboardingScreen extends StatelessWidget {
               const SizedBox(height: 28),
               Text(
                 'List your shop',
-                style: GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w800),
+                style: AppText.display(),
               ),
               const SizedBox(height: 8),
               Text(
                 'Add your shop name and area so customers can find you. You can edit this later.',
-                style: GoogleFonts.montserrat(color: AppColors.muted, height: 1.4),
+                style: GoogleFonts.figtree(color: AppColors.muted, height: 1.4),
               ),
               const SizedBox(height: 24),
               const TextField(

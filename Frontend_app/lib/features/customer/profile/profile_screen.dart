@@ -6,6 +6,7 @@ import '../../../core/services/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/role_screen.dart';
 import '../../vendor/vendor_shell.dart';
+import '../../../core/theme/app_typography.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -25,12 +26,12 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Text(
                 'Profile',
-                style: GoogleFonts.montserrat(fontSize: 28, fontWeight: FontWeight.w800),
+                style: AppText.display(size: 28),
               ),
               const Spacer(),
               Text(
                 'Edit',
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.figtree(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -44,7 +45,7 @@ class ProfileScreen extends StatelessWidget {
               backgroundColor: AppColors.primarySoft,
               child: Text(
                 initial,
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.figtree(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primary,
@@ -54,10 +55,10 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Center(
-            child: Text(name, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w700)),
+            child: Text(name, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w700)),
           ),
           Center(
-            child: Text('+91 $phone', style: GoogleFonts.montserrat(color: AppColors.muted)),
+            child: Text('+91 $phone', style: GoogleFonts.figtree(color: AppColors.muted)),
           ),
           const SizedBox(height: 20),
           _tile(Icons.person_outline, 'Personal information', () {}),
@@ -96,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: AppColors.ink),
-      title: Text(label, style: GoogleFonts.montserrat(fontWeight: FontWeight.w500)),
+      title: Text(label, style: GoogleFonts.figtree(fontWeight: FontWeight.w500)),
       trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.mutedLight),
     );
   }

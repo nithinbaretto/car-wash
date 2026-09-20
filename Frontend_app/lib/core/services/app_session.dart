@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/booking.dart';
+import '../models/user_location.dart';
 import '../models/user_role.dart';
 import 'mock_data.dart';
 
@@ -9,6 +10,7 @@ class AppSession extends ChangeNotifier {
   String name = '';
   String phone = '';
   bool loggedIn = false;
+  UserLocation? location;
   int customerTab = 0;
   int vendorTab = 0;
 
@@ -34,9 +36,15 @@ class AppSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLocation(UserLocation value) {
+    location = value;
+    notifyListeners();
+  }
+
   void logout() {
     loggedIn = false;
     role = null;
+    location = null;
     customerTab = 0;
     vendorTab = 0;
     notifyListeners();

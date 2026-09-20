@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/booking.dart';
 import '../../../core/services/app_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/brand_mark.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -35,12 +37,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
           children: [
             Text(
               'Bookings',
-              style: GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w800),
+              style: AppText.display(),
             ),
             const SizedBox(height: 4),
             Text(
               'Your upcoming and past washes',
-              style: GoogleFonts.montserrat(color: AppColors.muted),
+              style: GoogleFonts.figtree(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
             Container(
@@ -62,7 +64,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   ? Center(
                       child: Text(
                         'No bookings here yet.',
-                        style: GoogleFonts.montserrat(color: AppColors.muted),
+                        style: GoogleFonts.figtree(color: AppColors.muted),
                       ),
                     )
                   : ListView.separated(
@@ -92,7 +94,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.figtree(
               fontWeight: FontWeight.w600,
               color: selected ? AppColors.ink : AppColors.muted,
             ),
@@ -127,7 +129,7 @@ class _BookingCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(booking.shopImageUrl, width: 72, height: 72, fit: BoxFit.cover),
+            child: Image.asset(AppAssets.carWashCard, width: 72, height: 72, fit: BoxFit.cover),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -136,21 +138,21 @@ class _BookingCard extends StatelessWidget {
               children: [
                 Text(
                   booking.shopName,
-                  style: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
                 ),
-                Text(booking.service, style: GoogleFonts.montserrat(color: AppColors.muted, fontSize: 13)),
-                Text(booking.whenLabel, style: GoogleFonts.montserrat(fontSize: 13)),
+                Text(booking.service, style: GoogleFonts.figtree(color: AppColors.muted, fontSize: 13)),
+                Text(booking.whenLabel, style: GoogleFonts.figtree(fontSize: 13)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${booking.price}\$', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
+              Text('${booking.price}\$', style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Text(
                 booking.status.name,
-                style: GoogleFonts.montserrat(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+                style: GoogleFonts.figtree(color: color, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
           ),

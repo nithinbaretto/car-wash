@@ -51,7 +51,7 @@ class AppBottomNav extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     labels[i],
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.figtree(
                       fontSize: 12,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: color,

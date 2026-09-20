@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/app_notification.dart';
 import '../../../core/services/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/buttons.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -35,10 +36,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: Text(
                       'Notifications',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppText.display(size: 22),
                     ),
                   ),
                   const SizedBox(width: 46),
@@ -63,7 +61,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         selected: selected,
                         onSelected: (_) => setState(() => _filter = filter),
                         selectedColor: AppColors.primary,
-                        labelStyle: GoogleFonts.montserrat(
+                        labelStyle: GoogleFonts.figtree(
                           color: selected ? Colors.white : AppColors.ink,
                           fontWeight: FontWeight.w600,
                         ),
@@ -78,11 +76,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text('Today', style: GoogleFonts.montserrat(color: AppColors.muted)),
+                  Text('Today', style: GoogleFonts.figtree(color: AppColors.muted)),
                   const Spacer(),
                   Text(
                     'Mark all read',
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.figtree(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -129,14 +127,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
-                Text(item.body, style: GoogleFonts.montserrat(color: AppColors.muted, fontSize: 13)),
+                Text(item.title, style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
+                Text(item.body, style: GoogleFonts.figtree(color: AppColors.muted, fontSize: 13)),
               ],
             ),
           ),
           Column(
             children: [
-              Text(item.timeAgo, style: GoogleFonts.montserrat(fontSize: 11, color: AppColors.mutedLight)),
+              Text(item.timeAgo, style: GoogleFonts.figtree(fontSize: 11, color: AppColors.mutedLight)),
               const Icon(Icons.chevron_right, color: AppColors.mutedLight),
             ],
           ),

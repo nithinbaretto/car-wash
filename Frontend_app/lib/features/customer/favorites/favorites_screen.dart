@@ -6,6 +6,7 @@ import '../../../core/services/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/shop_cards.dart';
 import '../shop_detail/shop_detail_screen.dart';
+import '../../../core/theme/app_typography.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -24,12 +25,12 @@ class FavoritesScreen extends StatelessWidget {
           children: [
             Text(
               'Favourites',
-              style: GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w800),
+              style: AppText.display(),
             ),
             const SizedBox(height: 4),
             Text(
               'Your saved car washes',
-              style: GoogleFonts.montserrat(color: AppColors.muted),
+              style: GoogleFonts.figtree(color: AppColors.muted),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -38,7 +39,7 @@ class FavoritesScreen extends StatelessWidget {
                       child: Text(
                         'No saved shops yet.\nTap the heart on a listing to add one.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.montserrat(color: AppColors.muted),
+                        style: GoogleFonts.figtree(color: AppColors.muted),
                       ),
                     )
                   : ListView.separated(

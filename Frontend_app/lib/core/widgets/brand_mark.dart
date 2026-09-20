@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../theme/app_typography.dart';
 
 abstract final class AppAssets {
   static const logo = 'assets/logo.png';
@@ -10,8 +11,13 @@ abstract final class AppAssets {
   static const benefitClock = 'assets/images/clock.png';
   static const benefitFav = 'assets/images/fav.png';
   static const benefitStar = 'assets/images/star.png';
+  static const carWashCard = 'assets/images/car_wash_card.png';
   static const iconCar = 'assets/icons/car.png';
   static const iconShop = 'assets/icons/shop.png';
+  static const iconQuick = 'assets/icons/quick.png';
+  static const iconInterior = 'assets/icons/interior.png';
+  static const iconComplete = 'assets/icons/complete.png';
+  static const iconPremium = 'assets/icons/premium.png';
 }
 
 class BrandMark extends StatelessWidget {
@@ -42,11 +48,7 @@ class SplashWordmark extends StatelessWidget {
         const SizedBox(height: 18),
         Text(
           'Car wash',
-          style: GoogleFonts.montserrat(
-            fontSize: 36,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
+          style: AppText.display(size: 36, color: Colors.white),
         ),
       ],
     );

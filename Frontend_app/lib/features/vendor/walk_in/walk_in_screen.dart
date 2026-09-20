@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/theme/app_typography.dart';
 
 class WalkInScreen extends StatefulWidget {
   const WalkInScreen({super.key});
@@ -31,12 +32,12 @@ class _WalkInScreenState extends State<WalkInScreen> {
         children: [
           Text(
             'Walk-in',
-            style: GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w800),
+            style: AppText.display(),
           ),
           const SizedBox(height: 4),
           Text(
             'Add a customer who arrived without a booking.',
-            style: GoogleFonts.montserrat(color: AppColors.muted),
+            style: GoogleFonts.figtree(color: AppColors.muted),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -49,7 +50,7 @@ class _WalkInScreenState extends State<WalkInScreen> {
             decoration: const InputDecoration(labelText: 'Vehicle'),
           ),
           const SizedBox(height: 16),
-          Text('Service', style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+          Text('Service', style: GoogleFonts.figtree(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

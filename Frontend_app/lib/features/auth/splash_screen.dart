@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
                 children: [
                   Text(
                     'Version 1.0.3',
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.figtree(
                       color: Colors.white70,
                       fontSize: 12,
                     ),
@@ -80,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'A clean wash\nfor a smooth drive',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.figtree(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 16,
                       height: 1.35,
@@ -104,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 12),
                   Text(
                     'Loading your cleaner tomorrow...',
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.figtree(
                       color: Colors.white70,
                       fontSize: 12,
                     ),
