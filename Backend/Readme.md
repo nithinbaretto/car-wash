@@ -2,6 +2,19 @@
 
 This folder contains the Firebase Cloud Functions API for the car-wash app.
 
+## Backend layout
+
+```text
+functions/
+  index.js                 Firebase deployment entrypoint
+  src/app.js               Express app, middleware, and API routes
+  src/constants.js         Shared role, platform, and service-category values
+  scripts/set-super-admin.js
+```
+
+The public API base URL and existing route paths remain unchanged by this
+organization.
+
 ## One-time setup
 
 1. Create a Firebase project in the Firebase Console.
