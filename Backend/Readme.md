@@ -6,14 +6,43 @@ This folder contains the Firebase Cloud Functions API for the car-wash app.
 
 ```text
 functions/
-  index.js                 Firebase deployment entrypoint
-  src/app.js               Express app, middleware, and API routes
-  src/constants.js         Shared role, platform, and service-category values
-  scripts/set-super-admin.js
+  index.js                 Exports the Firebase HTTP function
+  src/
+    app.js                 Assembles Express middleware and feature routers
+    constants.js           Roles, platforms, and service categories
+    config/firebase.js     Initializes Firebase Admin and Firestore once
+    middleware/            Authentication, authorization, request IDs, errors
+    routes/                Users, discovery, favourites, bookings, notifications,
+                           admin, owner shops, and health
+    serializers/           User, shop, and booking response shapes
+    services/              Booking status/notification helpers and audit records
+    utils/                 Validation, geohash, API errors, async handlers
+  scripts/
+    set-super-admin.js      Manual admin bootstrap
+    check-syntax.js         Checks all JavaScript source, scripts, and tests
+  tests/app.test.js         Route and HTTP middleware regression checks
 ```
 
 The public API base URL and existing route paths remain unchanged by this
 organization.
+
+Add endpoints to the matching feature router. Shared authorization belongs in
+`middleware/`, response shaping in `serializers/`, and reusable business logic
+in `services/`. Existing Firestore transactions remain in their feature routers.
+Import Firebase through `config/firebase.js`; feature modules must not initialize
+their own Firebase app. `src/app.js` exports the Express app for local tests;
+only the root `index.js` wraps it in a deployed Firebase Function.
+
+Run checks from `Backend/functions`:
+
+```bash
+npm run lint
+npm test
+```
+
+These tests start a temporary local HTTP server without writing to Firebase.
+They verify route registration, health, authentication boundaries, and error
+middleware. Database workflows still require Firebase Emulator integration tests.
 
 ## One-time setup
 

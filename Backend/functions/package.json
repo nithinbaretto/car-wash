@@ -9,7 +9,8 @@
     "serve": "firebase emulators:start --only functions,firestore",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "lint": "node --check index.js && node --check src/app.js && node --check src/constants.js"
+    "lint": "node scripts/check-syntax.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

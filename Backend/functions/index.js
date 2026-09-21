@@ -1,3 +1,4 @@
-// Firebase Functions deployment entrypoint.
-// Application routes and business logic live in src/app.js.
-module.exports = require("./src/app");
+const {onRequest} = require("firebase-functions/v2/https");
+const app = require("./src/app");
+
+exports.api = onRequest({region: "asia-south1", cors: true}, app);
