@@ -4,6 +4,8 @@ const {once} = require("node:events");
 const app = require("../src/app");
 
 const expectedRoutes = [
+  "post /v1/me/owner-enrollment",
+  "delete /v1/me/devices/:installationId",
   "get /health",
   "post /v1/me/onboarding",
   "get /v1/me",

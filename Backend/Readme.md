@@ -203,3 +203,8 @@ node scripts/set-super-admin.js YOUR_FIREBASE_AUTH_UID
 
 The user must sign out and sign in again afterwards so Firebase issues an ID
 token containing the new `superAdmin` claim.
+# Integration handoff
+
+- [cURL requests for all registered APIs](docs/API_CURL.md)
+- [Importable Postman collection](docs/car-wash.postman_collection.json)
+- [Frontend screen mapping and remaining gaps](docs/FRONTEND_INTEGRATION.md)

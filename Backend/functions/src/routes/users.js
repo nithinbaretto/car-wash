@@ -10,6 +10,38 @@ const {ROLES, PLATFORMS} = require("../constants");
 
 const router = Router();
 
+// Enrollment enables owner onboarding, not shop approval or administrator access.
+router.post("/v1/me/owner-enrollment", requireAuth, asyncRoute(async (request, response) => {
+  requireObject(request.body);
+  rejectUnknownFields(request.body, []);
+  const reference = db.collection("users").doc(request.auth.uid);
+  const user = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    if (!snapshot.exists) throw new ApiError(404, "PROFILE_NOT_FOUND", "Complete onboarding first.");
+    const current = snapshot.data();
+    if (current.accountStatus === "suspended") {
+      throw new ApiError(403, "ACCOUNT_SUSPENDED", "This account is suspended.");
+    }
+    const updates = {
+      roles: [...new Set([...current.roles, "owner"])],
+      activeRole: "owner",
+      updatedAt: admin.firestore.Timestamp.now(),
+    };
+    transaction.update(reference, updates);
+    return {...current, ...updates};
+  });
+  response.json({success: true, data: {user: serializeUser(user)}, requestId: request.requestId});
+}));
+
+router.delete("/v1/me/devices/:installationId", requireAuth, asyncRoute(async (request, response) => {
+  const installationId = requiredString(request.params.installationId, "installationId", 1, 200);
+  if (!/^[A-Za-z0-9_-]+$/.test(installationId)) {
+    throw new ApiError(400, "VALIDATION_ERROR", "installationId must contain only letters, digits, underscores or hyphens.");
+  }
+  await db.collection("users").doc(request.auth.uid).collection("devices").doc(installationId).delete();
+  response.status(204).send();
+}));
+
 router.post("/v1/me/onboarding", requireAuth, asyncRoute(async (request, response) => {
   requireObject(request.body);
   rejectUnknownFields(request.body, [
@@ -138,6 +170,9 @@ router.post("/v1/me/devices", requireAuth, asyncRoute(async (request, response) 
   requireObject(request.body);
   rejectUnknownFields(request.body, ["installationId", "fcmToken", "platform"]);
   const installationId = requiredString(request.body.installationId, "installationId", 1, 200);
+  if (!/^[A-Za-z0-9_-]+$/.test(installationId)) {
+    throw new ApiError(400, "VALIDATION_ERROR", "installationId must contain only letters, digits, underscores or hyphens.");
+  }
   const fcmToken = requiredString(request.body.fcmToken, "fcmToken", 1, 4_096);
   if (!PLATFORMS.has(request.body.platform)) {
     throw new ApiError(400, "VALIDATION_ERROR", "platform must be android, ios, or web", {platform: "invalid"});

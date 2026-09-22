@@ -1,0 +1,674 @@
+{
+  "info": {
+    "name": "Car Wash API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local environment by default. Execute requests individually; mutations affect data. Tokens and IDs must be supplied. See API_CURL.md."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5002/car-wash-5d9ce/asia-south1/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "ownerToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "shopId",
+      "value": "REPLACE"
+    },
+    {
+      "key": "serviceId",
+      "value": "REPLACE"
+    },
+    {
+      "key": "bookingId",
+      "value": "REPLACE"
+    },
+    {
+      "key": "userId",
+      "value": "REPLACE"
+    },
+    {
+      "key": "date",
+      "value": "REPLACE_WITH_FUTURE_YYYY-MM-DD"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "REPLACE_WITH_UNIQUE_REQUEST_ID"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Onboard",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/onboarding",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"displayName\": \"Test Customer\",\n  \"initialRole\": \"customer\",\n  \"acceptedTermsVersion\": \"v1\",\n  \"acceptedPrivacyVersion\": \"v1\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me"
+      }
+    },
+    {
+      "name": "Edit profile",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"displayName\": \"Test Customer\",\n  \"photoUrl\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Enroll owner",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/owner-enrollment",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Switch role",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/active-role",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"activeRole\": \"customer\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Register device",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/devices",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"installationId\": \"test-device\",\n  \"fcmToken\": \"REPLACE_WITH_FCM_TOKEN\",\n  \"platform\": \"android\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Remove device",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/devices/test-device"
+      }
+    },
+    {
+      "name": "Categories",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/categories"
+      }
+    },
+    {
+      "name": "Nearby",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/car-washes/nearby?latitude=12.9352&longitude=77.6245&radiusKm=5&category=quick&limit=20"
+      }
+    },
+    {
+      "name": "Shop detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/car-washes/{{shopId}}"
+      }
+    },
+    {
+      "name": "Available slots",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/car-washes/{{shopId}}/availability?date={{date}}"
+      }
+    },
+    {
+      "name": "Favourites",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/favourites?limit=20"
+      }
+    },
+    {
+      "name": "Save favourite",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/favourites/{{shopId}}"
+      }
+    },
+    {
+      "name": "Remove favourite",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/favourites/{{shopId}}"
+      }
+    },
+    {
+      "name": "Create booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"carWashId\": \"{{shopId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"date\": \"{{date}}\",\n  \"startAt\": \"15:30\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "My bookings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/bookings?tab=ongoing&limit=20"
+      }
+    },
+    {
+      "name": "Booking detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/bookings/{{bookingId}}"
+      }
+    },
+    {
+      "name": "Cancel pending booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/bookings/{{bookingId}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Notifications",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/notifications?type=all&limit=20"
+      }
+    },
+    {
+      "name": "Read notifications",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/notifications/read",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"markAll\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Create shop",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Car Wash\",\n  \"contactPhone\": \"+919999999999\",\n  \"address\": {\n    \"line1\": \"1 Main Road\",\n    \"area\": \"Koramangala\",\n    \"city\": \"Bengaluru\",\n    \"state\": \"Karnataka\",\n    \"postalCode\": \"560034\",\n    \"formattedAddress\": \"1 Main Road, Koramangala, Bengaluru\"\n  },\n  \"location\": {\n    \"latitude\": 12.9352,\n    \"longitude\": 77.6245\n  },\n  \"categories\": [\n    \"quick\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Owner shops",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes"
+      }
+    },
+    {
+      "name": "Owner shop detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}"
+      }
+    },
+    {
+      "name": "Update shop map pin",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"location\": {\n    \"latitude\": 12.9352,\n    \"longitude\": 77.6245\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Create service",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/services",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Quick Wash\",\n  \"category\": \"quick\",\n  \"priceMinor\": 25000,\n  \"durationMinutes\": 30,\n  \"active\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Set availability",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/availability/{{date}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"slots\": [\n    {\n      \"startAt\": \"15:30\",\n      \"endAt\": \"16:00\",\n      \"capacity\": 2,\n      \"enabled\": true\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Owner booking board",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/bookings?date={{date}}&limit=50"
+      }
+    },
+    {
+      "name": "Accept booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/bookings/{{bookingId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"accepted\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Admin dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/admin/dashboard"
+      }
+    },
+    {
+      "name": "Admin shop queue",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/admin/car-washes?status=pending_review&limit=50"
+      }
+    },
+    {
+      "name": "Approve shop",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/admin/car-washes/{{shopId}}/review",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"decision\": \"approve\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Suspend user",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/admin/users/{{userId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"Replace with actual reason\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
