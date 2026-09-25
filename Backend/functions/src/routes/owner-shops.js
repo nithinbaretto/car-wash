@@ -116,6 +116,33 @@ router.patch("/v1/owner/car-washes/:carWashId", requireAuth, asyncRoute(async (r
   });
 }));
 
+router.post("/v1/owner/car-washes/:carWashId/resubmit", requireAuth, asyncRoute(async (request, response) => {
+  const shop = await requireShopOwner(request, request.params.carWashId);
+  requireObject(request.body);
+  rejectUnknownFields(request.body, []);
+  if (shop.data().status !== "rejected") {
+    throw new ApiError(409, "SHOP_RESUBMISSION_INVALID", "Only rejected car washes can be resubmitted.");
+  }
+  const now = admin.firestore.Timestamp.now();
+  await db.runTransaction(async (transaction) => {
+    const latest = await transaction.get(shop.ref);
+    if (!latest.exists || latest.data().status !== "rejected") {
+      throw new ApiError(409, "SHOP_RESUBMISSION_INVALID", "Only rejected car washes can be resubmitted.");
+    }
+    transaction.update(shop.ref, {
+      status: "pending_review",
+      review: {stateChangedAt: now, stateChangedBy: request.auth.uid, decision: "resubmit", reason: null},
+      updatedAt: now,
+    });
+    transaction.create(db.collection("auditLogs").doc(), {
+      actorUid: request.auth.uid, action: "car_wash.resubmit", resourceType: "carWash",
+      resourceId: shop.ref.id, requestId: request.requestId,
+      details: {beforeStatus: "rejected", afterStatus: "pending_review"}, createdAt: now,
+    });
+  });
+  response.status(200).json({success: true, data: {carWashId: shop.ref.id, status: "pending_review"}, requestId: request.requestId});
+}));
+
 router.post("/v1/owner/car-washes/:carWashId/services", requireAuth, asyncRoute(async (request, response) => {
   const shop = await requireShopOwner(request, request.params.carWashId);
   requireObject(request.body);

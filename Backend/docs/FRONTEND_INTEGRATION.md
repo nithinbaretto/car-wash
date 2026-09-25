@@ -46,3 +46,11 @@ These are not implemented by the collection; do not wire mock data as if real.
 ## Handoff
 
 Use API_CURL.md or import car-wash.postman_collection.json. Start on emulators, create owner/customer accounts and a reviewed shop, then exercise pending → accepted → in_progress → completed. Test rejection, pending cancellation, invalid tokens and cross-owner access. No deployment was performed by this change.
+
+## Super-admin dashboard
+
+The separate React dashboard is in `Admin/`. It signs in with Firebase email/password
+accounts carrying the `superAdmin` claim and reads all operational data through the
+protected `/v1/admin/*` API. Configure `Admin/.env` from `Admin/.env.example` before
+running it. A rejected owner shop can now be corrected and resubmitted with
+`POST /v1/owner/car-washes/:carWashId/resubmit`.

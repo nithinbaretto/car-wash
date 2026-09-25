@@ -1,22 +1,20 @@
-# Node.js dependencies and generated output
-functions/node_modules/
-functions/lib/
-functions/coverage/
+admin-dist/
 
-# Local environment configuration and Firebase emulator data
-.env
-.env.*
-!.env.example
-service-account*.json
+# Dependencies and local runtime configuration
+functions/node_modules/
+functions/.env
+functions/.env.*
+functions/.runtimeconfig.json
+
+# Firebase CLI and Emulator output
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
 firestore-debug.log
-firestore-debug.*.log
 ui-debug.log
-*.local
+emulator-data/
 
-# OS and editor files
-.DS_Store
-.idea/
-.vscode/
+# Service-account credentials and local keys
+service-account*.json
+serviceAccountKey*.json
+*-firebase-adminsdk-*.json

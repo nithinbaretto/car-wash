@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "car-wash-5d9ce"
-  }
+  },
+  "targets": {
+    "car-wash-5d9ce": {
+      "hosting": {
+        "admin": [
+          "car-wash-5d9ce-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

@@ -78,6 +78,8 @@ router.post("/v1/me/onboarding", requireAuth, asyncRoute(async (request, respons
       displayName,
       phoneNumber: request.auth.phone_number || null,
       email: request.auth.email || null,
+      normalizedPhone: request.auth.phone_number ? request.auth.phone_number.replace(/\s/g, "") : null,
+      normalizedEmail: request.auth.email ? request.auth.email.trim().toLowerCase() : null,
       photoUrl: request.auth.picture || null,
       authProviders: (request.auth.firebase && request.auth.firebase.sign_in_provider) ?
         [request.auth.firebase.sign_in_provider] : [],

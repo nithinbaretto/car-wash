@@ -30,6 +30,10 @@ async function requireSuperAdmin(request) {
   if (request.auth.superAdmin !== true) {
     throw new ApiError(403, "SUPER_ADMIN_REQUIRED", "Super-admin access is required.");
   }
+  const profile = await db.collection("users").doc(request.auth.uid).get();
+  if (profile.exists && profile.data().accountStatus === "suspended") {
+    throw new ApiError(403, "ACCOUNT_SUSPENDED", "This account is suspended.");
+  }
 }
 
 async function requireShopOwner(request, carWashId) {
