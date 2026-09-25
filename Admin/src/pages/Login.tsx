@@ -10,22 +10,18 @@ import {
   Alert,
   InputAdornment,
   IconButton,
-  Divider,
-  Chip,
   CircularProgress,
 } from '@mui/material';
 import {signInWithEmailAndPassword, sendPasswordResetEmail} from 'firebase/auth';
 import {useTheme} from '@mui/material/styles';
-import {Eye, EyeOff, Sparkles, Shield, ArrowRight, CheckCircle2} from 'lucide-react';
+import {Eye, EyeOff, Sparkles, ArrowRight} from 'lucide-react';
 import {auth, firebaseEnabled, useSessionPersistence} from '../firebase';
-import {useAuth} from '../context/AuthContext';
 import {useNavigate} from 'react-router-dom';
 
 export const Login: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
-  const {enableDemoMode} = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -68,11 +64,6 @@ export const Login: React.FC = () => {
     } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Unable to send password reset email.');
     }
-  };
-
-  const handleDemoSignIn = () => {
-    enableDemoMode();
-    navigate('/');
   };
 
   return (
@@ -160,7 +151,7 @@ export const Login: React.FC = () => {
 
           {!firebaseEnabled && (
             <Alert severity="warning" sx={{mb: 2.5, borderRadius: 2}}>
-              Firebase credentials missing. You can use <strong>Demo Mode</strong> below to test the full app!
+              Firebase credentials are missing. Configure Admin/.env before signing in.
             </Alert>
           )}
 
@@ -244,28 +235,6 @@ export const Login: React.FC = () => {
               Sign In to Super Admin
             </Button>
 
-            <Divider sx={{my: 1}}>
-              <Typography variant="caption" color="text.secondary" sx={{fontWeight: 600}}>
-                OR EXPLORE
-              </Typography>
-            </Divider>
-
-            {/* Quick Demo Preview Button */}
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handleDemoSignIn}
-              startIcon={<Shield size={18} />}
-              sx={{
-                py: 1.1,
-                fontWeight: 700,
-                borderRadius: 2.5,
-                borderWidth: '1.5px',
-                '&:hover': {borderWidth: '1.5px'},
-              }}
-            >
-              Preview as Super Admin (Demo Mode)
-            </Button>
           </Stack>
         </CardContent>
       </Card>

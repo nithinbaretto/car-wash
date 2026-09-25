@@ -63,20 +63,7 @@ export const query = (values: Record<string, string | number | undefined | null>
   return params.toString() ? `?${params.toString()}` : '';
 };
 
-// Check if demo mode is enabled in localStorage
-export const isDemoModeActive = (): boolean => {
-  return localStorage.getItem('cw_admin_demo_mode') === 'true';
-};
-
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const isDemo = isDemoModeActive();
-
-  // If in demo mode, intercept API calls and return realistic mock responses
-  if (isDemo) {
-    await new Promise((r) => setTimeout(r, 200)); // simulate short network latency
-    return handleMockRequest<T>(path, init);
-  }
-
   if (!auth?.currentUser) {
     throw new Error('Sign in is required.');
   }

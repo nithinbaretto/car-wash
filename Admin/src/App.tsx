@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import {Routes, Route, Navigate} from 'react-router-dom';
-import {Box, CircularProgress, Typography} from '@mui/material';
+import {Alert, Box, Button, CircularProgress, Stack, Typography} from '@mui/material';
 import {useQuery} from '@tanstack/react-query';
 import {Sparkles} from 'lucide-react';
 import {useAuth} from './context/AuthContext';
@@ -21,7 +21,7 @@ import {UserDetail} from './pages/UserDetail';
 import {AuditLogs} from './pages/AuditLogs';
 
 const ProtectedRoute: React.FC<{children: React.ReactNode}> = ({children}) => {
-  const {user, loading, isDemo, setAdminProfile} = useAuth();
+  const {user, loading, setAdminProfile, logout} = useAuth();
 
   const {
     data: profileData,
@@ -30,7 +30,7 @@ const ProtectedRoute: React.FC<{children: React.ReactNode}> = ({children}) => {
   } = useQuery({
     queryKey: ['admin-me'],
     queryFn: () => api<{admin: AdminProfile}>('/v1/admin/me'),
-    enabled: Boolean(user) && !isDemo,
+    enabled: Boolean(user),
   });
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const ProtectedRoute: React.FC<{children: React.ReactNode}> = ({children}) => {
     }
   }, [profileData, setAdminProfile]);
 
-  if (loading || (Boolean(user) && !isDemo && isProfileLoading)) {
+  if (loading || (Boolean(user) && isProfileLoading)) {
     return (
       <Box
         sx={{
@@ -81,16 +81,28 @@ const ProtectedRoute: React.FC<{children: React.ReactNode}> = ({children}) => {
     );
   }
 
-  if (!user && !isDemo) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (profileError) {
+    return (
+      <Box sx={{minHeight: '100vh', display: 'grid', placeItems: 'center', p: 3, backgroundColor: 'background.default'}}>
+        <Stack spacing={2} sx={{width: '100%', maxWidth: 460}}>
+          <Typography variant="h5" fontWeight={700}>Admin access required</Typography>
+          <Alert severity="error">{profileError instanceof Error ? profileError.message : 'Unable to verify super-admin access.'}</Alert>
+          <Button variant="contained" onClick={() => logout()}>Sign out</Button>
+        </Stack>
+      </Box>
+    );
   }
 
   return <Shell>{children}</Shell>;
 };
 
 export const App: React.FC = () => {
-  const {user, isDemo} = useAuth();
-  const isAuthenticated = Boolean(user) || isDemo;
+  const {user} = useAuth();
+  const isAuthenticated = Boolean(user);
 
   return (
     <Routes>

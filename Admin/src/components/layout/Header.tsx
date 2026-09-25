@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({onMenuClick, drawerWidth = 260}) 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const {mode, toggleTheme} = useAppTheme();
-  const {user, isDemo, logout} = useAuth();
+  const {user, logout} = useAuth();
   const navigate = useNavigate();
 
   const [searchVal, setSearchVal] = useState('');
@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({onMenuClick, drawerWidth = 260}) 
             variant="caption"
             sx={{fontWeight: 700, color: isDark ? '#34D399' : '#047857', fontSize: '0.725rem'}}
           >
-            {isDemo ? 'Demo Mode (Mock)' : 'Live Engine (asia-south1)'}
+            Live Engine (asia-south1)
           </Typography>
         </Box>
 

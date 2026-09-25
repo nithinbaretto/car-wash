@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const {user, adminProfile, isDemo, logout} = useAuth();
+  const {user, adminProfile, logout} = useAuth();
 
   // Fetch pending review count for badge
   const {data: stats} = useQuery({
@@ -132,19 +132,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Typography variant="caption" sx={{fontWeight: 700, color: '#6366F1', letterSpacing: '0.04em'}}>
               SUPER ADMIN
             </Typography>
-            {isDemo && (
-              <Chip
-                label="DEMO"
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.625rem',
-                  fontWeight: 800,
-                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                  color: '#F59E0B',
-                }}
-              />
-            )}
           </Box>
         </Box>
       </Box>
