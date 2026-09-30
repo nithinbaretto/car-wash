@@ -12,8 +12,6 @@ class ApiConfig {
   static const String emulatorHostLocal =
       'http://127.0.0.1:5002/car-wash-5d9ce/asia-south1/api';
 
-  static const String firebaseApiKey =
-      'AIzaSyDCNoy0nebG4tpaO01bO4pnjot0eqtfWDM';
   static const String firebaseProjectId = 'car-wash-5d9ce';
   static const String firebaseAuthDomain = 'car-wash-5d9ce.firebaseapp.com';
 

@@ -2,6 +2,19 @@
 
 ## Run
 
+On a fresh clone, generate the local Firebase configuration first (requires
+access to the Firebase project):
+
+```sh
+firebase login
+dart pub global activate flutterfire_cli
+flutterfire configure --project=car-wash-5d9ce --platforms=android,ios,web --android-package-name=com.carwash.carwash --ios-bundle-id=com.carwash.carwash --web-app-id=1:653869969705:web:0da4bd3a19133638bf8738
+```
+
+This creates the ignored Firebase configuration files. CI must restore these
+files from its configuration store before running Flutter analysis, tests or
+builds. Do not use `git add -f` to commit the generated files.
+
 ```sh
 flutter pub get
 flutter run
@@ -16,8 +29,29 @@ flutter run --dart-define=API_BASE_URL=https://YOUR_API_BASE
 
 Firebase client configuration is in `lib/firebase_options.dart`,
 `android/app/google-services.json`, and `ios/Runner/GoogleService-Info.plist`.
-These are public client identifiers; never put Admin credentials or service-account
-keys in the app. The Android package and iOS bundle ID are `com.carwash.carwash`.
+These files stay local and are excluded from Git. They contain public client
+identifiers; never put Admin credentials or service-account keys in the app.
+The Android package and iOS bundle ID are `com.carwash.carwash`.
+
+### Firebase API-key security alerts
+
+Firebase client API keys identify the project; they do not grant administrative
+access. They remain visible in compiled apps even when the source configuration
+is ignored. Keep API restrictions enabled and never allow non-Firebase APIs,
+such as the Generative Language API, on a public Firebase client key.
+See [Firebase's API-key guidance](https://firebase.google.com/docs/projects/api-keys).
+
+On 2026-09-30, the project's Android, iOS and browser keys were checked: each
+had Firebase-related API restrictions and none allowed the Generative Language
+API. The Android key reported by GitHub is the Firebase-generated client key.
+After verifying these restrictions, resolve that alert as **False positive**,
+with the Firebase documentation and restriction review as the reason. Do not
+mark it **Revoked** unless it has actually been revoked.
+
+Removing the generated files from tracking does not erase earlier commits or
+revoke a key. If a key is used outside Firebase or loses its restrictions,
+replace it, update all affected clients, then revoke the old key. Do not revoke
+the current key solely to clear a scanner alert: installed clients still use it.
 
 ## Phone OTP
 
