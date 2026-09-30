@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/models/shop.dart';
 import '../../../core/services/app_session.dart';
-import '../../../core/services/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/brand_mark.dart';
@@ -23,6 +22,16 @@ class _HomeScreenState extends State<HomeScreen> {
   String _service = 'All';
   bool _openNow = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = SessionScope.of(context);
+      session.loadNearbyShops();
+      session.loadCategories();
+    });
+  }
+
   String _greeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
@@ -31,13 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _firstName(String name) {
-    if (name.trim().isEmpty) return 'Raghav';
+    if (name.trim().isEmpty) return 'there';
     return name.trim().split(' ').first;
   }
 
   List<Shop> _filteredShops(AppSession session) {
     final loc = session.location;
-    final shops = MockData.shops.where((shop) {
+    final shops = session.nearbyShops.where((shop) {
       if (_openNow && !shop.isOpen) return false;
       return shop.matchesService(_service);
     }).toList();
@@ -78,10 +87,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.of(context)
-                            .pushNamed(NotificationsScreen.route),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamed(NotificationsScreen.route),
                         icon: Badge(
                           smallSize: 8,
+                          isLabelVisible: session.unreadNotificationCount > 0,
                           child: Icon(
                             Icons.notifications_none,
                             color: AppColors.primary,
@@ -95,10 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: InkWell(
-                    onTap: () => Navigator.of(context).pushNamed(
-                      LocationPickerScreen.route,
-                      arguments: true,
-                    ),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).pushNamed(LocationPickerScreen.route, arguments: true),
                     borderRadius: BorderRadius.circular(8),
                     child: Row(
                       children: [
@@ -128,7 +138,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 _ServiceFilters(
                   selected: _service,
                   openNow: _openNow,
-                  onService: (value) => setState(() => _service = value),
+                  onService: (value) {
+                    setState(() => _service = value);
+                    session.loadNearbyShops(
+                      category: value == 'All' ? null : value,
+                    );
+                  },
                   onOpenNow: () => setState(() => _openNow = !_openNow),
                 ),
                 const SizedBox(height: 16),
@@ -162,26 +177,48 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Expanded(
-            child: shops.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 28, 20, 8),
-                    child: _EmptyFilterState(),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                    itemCount: shops.length,
-                    itemBuilder: (context, index) {
-                      final shop = shops[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: NearbyShopCard(
-                          shop: shop,
-                          onTap: () => _openShop(context, shop),
-                          onBook: () => _openShop(context, shop),
+            child: RefreshIndicator(
+              onRefresh: () => session.loadNearbyShops(
+                category: _service == 'All' ? null : _service,
+                refresh: true,
+              ),
+              child: session.loadingShops
+                  ? const Center(child: CircularProgressIndicator())
+                  : session.shopsError != null
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        Text(session.shopsError!),
+                        TextButton(
+                          onPressed: () =>
+                              session.loadNearbyShops(category: _service),
+                          child: const Text('Retry'),
                         ),
-                      );
-                    },
-                  ),
+                      ],
+                    )
+                  : shops.isEmpty
+                  ? ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [_EmptyFilterState()],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: shops.length,
+                      itemBuilder: (context, index) {
+                        final shop = shops[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: NearbyShopCard(
+                            shop: shop,
+                            onTap: () => _openShop(context, shop),
+                            onBook: () => _openShop(context, shop),
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),

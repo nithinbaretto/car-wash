@@ -21,7 +21,8 @@ import {
   InputAdornment,
   TablePagination,
 } from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {useApiList} from '../hooks/useApiList';
+import {LoadMore} from '../components/common/LoadMore';
 import {useSearchParams, Link} from 'react-router-dom';
 import {
   Store,
@@ -62,10 +63,10 @@ export const Shops: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['shops', filters],
-    queryFn: () => api<{carWashes: Shop[]}>(`/v1/admin/car-washes${query(filters)}`),
-  });
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useApiList<Shop, 'carWashes'>('shops', '/v1/admin/car-washes', 'carWashes', filters);
 
   const shops = data?.carWashes || [];
 
@@ -139,7 +140,7 @@ export const Shops: React.FC = () => {
           <Box component="form" onSubmit={handleSearchSubmit} sx={{flex: 1, minWidth: 260}}>
             <TextField
               size="small"
-              placeholder="Search by Shop ID or Name..."
+              placeholder="Search by exact Shop ID..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               fullWidth
@@ -296,6 +297,7 @@ export const Shops: React.FC = () => {
                           variant="outlined"
                           size="small"
                           onClick={() => setSelectedShop(shop)}
+                          disabled={shop.status === 'rejected'}
                           startIcon={<Edit3 size={14} />}
                           sx={{borderRadius: 1.75, py: 0.5}}
                         >
@@ -318,6 +320,8 @@ export const Shops: React.FC = () => {
           </TableContainer>
         )}
       </Card>
+
+      <LoadMore hasMore={hasNextPage} loading={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} />
 
       {selectedShop && (
         <ReviewModal shop={selectedShop} onClose={() => setSelectedShop(null)} />

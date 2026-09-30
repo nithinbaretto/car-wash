@@ -5,6 +5,7 @@ import {useTheme} from '@mui/material/styles';
 interface BookingStatusProps {
   stats: {
     pending: number;
+    rejected: number;
     accepted: number;
     in_progress: number;
     completed: number;
@@ -18,6 +19,7 @@ export const BookingStatusBar: React.FC<BookingStatusProps> = ({stats}) => {
 
   const total =
     (stats.pending || 0) +
+    (stats.rejected || 0) +
     (stats.accepted || 0) +
     (stats.in_progress || 0) +
     (stats.completed || 0) +
@@ -28,6 +30,7 @@ export const BookingStatusBar: React.FC<BookingStatusProps> = ({stats}) => {
     {key: 'in_progress', label: 'In Progress', count: stats.in_progress || 0, color: '#6366F1'},
     {key: 'accepted', label: 'Accepted', count: stats.accepted || 0, color: '#06B6D4'},
     {key: 'pending', label: 'Pending', count: stats.pending || 0, color: '#F59E0B'},
+    {key: 'rejected', label: 'Rejected', count: stats.rejected || 0, color: '#F97316'},
     {key: 'cancelled', label: 'Cancelled', count: stats.cancelled || 0, color: '#EF4444'},
   ];
 
@@ -109,21 +112,17 @@ export const BookingStatusBar: React.FC<BookingStatusProps> = ({stats}) => {
   );
 };
 
-export const WeeklyActivityChart: React.FC = () => {
+export const WeeklyActivityChart: React.FC<{days?: {date: string; bookings: number}[]}> = ({days}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const days = [
-    {day: 'Mon', bookings: 42, revenue: 32000},
-    {day: 'Tue', bookings: 55, revenue: 41000},
-    {day: 'Wed', bookings: 68, revenue: 53000},
-    {day: 'Thu', bookings: 61, revenue: 47000},
-    {day: 'Fri', bookings: 84, revenue: 68000},
-    {day: 'Sat', bookings: 112, revenue: 98000},
-    {day: 'Sun', bookings: 128, revenue: 114000},
-  ];
-
-  const maxVal = 135;
+  if (!days?.length) return <Card sx={{height: '100%'}}><CardContent>
+    <Typography variant="h6">Weekly Booking Volume</Typography>
+    <Typography color="text.secondary">Weekly activity is unavailable.</Typography>
+  </CardContent></Card>;
+  const maxVal = Math.max(1, ...days.map((day) => day.bookings));
+  const peak = days.reduce((best, day) => day.bookings > best.bookings ? day : best);
+  const dayLabel = (date: string) => new Date(`${date}T12:00:00+05:30`).toLocaleDateString('en-IN', {weekday: 'short', timeZone: 'Asia/Kolkata'});
 
   return (
     <Card sx={{height: '100%'}}>
@@ -131,7 +130,7 @@ export const WeeklyActivityChart: React.FC = () => {
         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5}}>
           <Box>
             <Typography variant="h6" sx={{fontWeight: 700}}>
-              Weekly Booking Velocity
+              Weekly Booking Volume
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Daily customer appointment volume
@@ -148,7 +147,7 @@ export const WeeklyActivityChart: React.FC = () => {
               fontSize: '0.8rem',
             }}
           >
-            Peak: Sunday (128)
+            Peak: {dayLabel(peak.date)} ({peak.bookings})
           </Box>
         </Box>
 
@@ -157,7 +156,7 @@ export const WeeklyActivityChart: React.FC = () => {
           {days.map((d) => {
             const heightPct = (d.bookings / maxVal) * 100;
             return (
-              <Stack key={d.day} alignItems="center" spacing={1} sx={{flex: 1}}>
+              <Stack key={d.date} alignItems="center" spacing={1} sx={{flex: 1, height: '100%', justifyContent: 'flex-end'}}>
                 <Typography variant="caption" sx={{fontWeight: 700, color: '#818CF8'}}>
                   {d.bookings}
                 </Typography>
@@ -165,10 +164,10 @@ export const WeeklyActivityChart: React.FC = () => {
                   sx={{
                     width: '60%',
                     maxWidth: 32,
-                    height: `${heightPct}%`,
+                    height: `${heightPct * 110 / 100}px`,
                     borderRadius: '6px 6px 0 0',
                     background:
-                      d.day === 'Sun' || d.day === 'Sat'
+                      d.date === peak.date
                         ? 'linear-gradient(180deg, #6366F1 0%, #4F46E5 100%)'
                         : isDark
                         ? 'linear-gradient(180deg, rgba(99, 102, 241, 0.6) 0%, rgba(99, 102, 241, 0.2) 100%)'
@@ -185,7 +184,7 @@ export const WeeklyActivityChart: React.FC = () => {
                   color="text.secondary"
                   sx={{fontWeight: 600, fontSize: '0.75rem'}}
                 >
-                  {d.day}
+                  {dayLabel(d.date)}
                 </Typography>
               </Stack>
             );

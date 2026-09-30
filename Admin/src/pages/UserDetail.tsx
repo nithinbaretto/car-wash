@@ -61,6 +61,7 @@ export const UserDetail: React.FC = () => {
       qc.invalidateQueries({queryKey: ['user', id]});
       qc.invalidateQueries({queryKey: ['users']});
       qc.invalidateQueries({queryKey: ['dashboard']});
+      qc.invalidateQueries({queryKey: ['audit']});
       showSuccess(`Account status updated to ${nextStatus}.`);
       setReason('');
       setErrorMsg('');

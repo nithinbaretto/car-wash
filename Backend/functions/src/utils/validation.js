@@ -72,8 +72,8 @@ function validateAddress(address) {
 function validateLocation(location) {
   requireObject(location);
   rejectUnknownFields(location, ["latitude", "longitude", "placeId"]);
-  if (typeof location.latitude !== "number" || location.latitude < -90 || location.latitude > 90 ||
-      typeof location.longitude !== "number" || location.longitude < -180 || location.longitude > 180) {
+  if (!Number.isFinite(location.latitude) || location.latitude < -90 || location.latitude > 90 ||
+      !Number.isFinite(location.longitude) || location.longitude < -180 || location.longitude > 180) {
     throw new ApiError(400, "VALIDATION_ERROR", "location coordinates are invalid", {location: "invalid"});
   }
   if (location.placeId !== undefined && (typeof location.placeId !== "string" || location.placeId.length > 300)) {

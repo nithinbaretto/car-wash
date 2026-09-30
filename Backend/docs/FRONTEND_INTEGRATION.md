@@ -1,21 +1,21 @@
 # Frontend integration audit
 
-The Flutter app currently uses local session state and MockData, not the backend. This audit does not mean those screens are integrated or production-ready.
+The Flutter app uses authenticated API services for discovery, booking, favourites, notifications, profiles, and owner workflows. Phone verification uses Firebase Authentication. This document maps contracts; real-device and deployed-environment verification are still required.
 
 ## Screen mapping
 
-| Frontend feature | Backend integration | Remaining frontend work |
+| Frontend feature | Backend integration | Implemented behavior / constraints |
 | --- | --- | --- |
-| Login / OTP | Firebase Auth SDK, then POST /v1/me/onboarding | Replace hardcoded MockData.otpCode; add Firebase dependencies and provider configuration. Existing users fetch /v1/me instead of repeating onboarding. |
+| Login / OTP | Firebase Auth SDK, then POST /v1/me/onboarding | Real SMS send, verify and resend through Firebase Auth SDK. Existing users fetch /v1/me before onboarding. India SMS delivery enabled; see [mobile setup](../../Frontend_app/README.md) for signing/APNs and device verification. |
 | Role selection / become vendor | POST /v1/me/owner-enrollment, PUT /v1/me/active-role | Map frontend vendor to backend owner. Enrollment retains customer access; new shops still require admin approval. |
-| Home / location | GET /v1/categories and /v1/car-washes/nearby | Send selected latitude/longitude; current map uses flutter_map. Location selection may stay local. Replace MockData.shops. |
-| Shop detail / booking | GET shop detail and availability; POST /v1/bookings | Select actual service ID, date and returned slot. Do not use mock nextAvailable text or report success before server response. |
-| Favourites | GET, PUT, DELETE /v1/me/favourites | Replace locally seeded favourite IDs; reconcile failed mutations. Nearby favourite flag currently defaults false, so merge favourite IDs yourself. |
+| Home / location | GET /v1/categories and /v1/car-washes/nearby | Sends selected latitude/longitude from flutter_map; displays real empty and error states. |
+| Shop detail / booking | GET shop detail and availability; POST /v1/bookings | Uses actual service IDs and returned slots, guards stale selections, and retains idempotency keys for retries. |
+| Favourites | GET, PUT, DELETE /v1/me/favourites | Loads saved IDs, merges them into discovery, and reports failed mutations. |
 | My bookings | GET /v1/me/bookings and /v1/bookings/:id | Preserve pending vs accepted; show awaiting owner approval. Refresh after owner changes. |
-| Notifications | GET /v1/me/notifications; POST /v1/me/notifications/read | Replace mock items, map tabs to singular booking/offer/update values. |
+| Notifications | GET /v1/me/notifications; POST /v1/me/notifications/read | Uses notification feed/read endpoints and singular booking/offer/update filter values. |
 | Profile / logout | GET/PATCH /v1/me; DELETE device then Firebase sign-out | Clear local user state. Do not send phone-number edits through PATCH profile; verified identity belongs to Auth. |
-| Vendor onboarding | POST /v1/owner/car-washes | Current name/area form is insufficient: add contact, full address, map coordinates and categories. |
-| Vendor today | GET owner shop bookings, POST owner booking status | Select managed shop and date; replace MockData.vendorToday. Manual acceptance remains mandatory. |
+| Vendor onboarding | POST /v1/owner/car-washes | Submits contact, address, selected map coordinates and categories for admin approval. |
+| Vendor today | GET owner shop bookings, POST owner booking status | Loads the managed shop queue and persists status changes. Manual acceptance remains mandatory. |
 
 ## Model adapters
 
@@ -30,18 +30,16 @@ The Flutter app currently uses local session state and MockData, not the backend
 - POST /v1/me/owner-enrollment: transactionally and idempotently enroll an active existing customer as owner, preserving existing roles. No admin claim or shop approval is granted.
 - DELETE /v1/me/devices/:installationId: idempotent removal of the authenticated user's installation on logout. Registration/removal validate IDs.
 
-## Still missing / needs follow-up
+## Operational coverage and follow-up
 
-These are not implemented by the collection; do not wire mock data as if real.
-
-- Vendor walk-ins: current screen only shows a snackbar. Decide guest identity, slot/bay capacity, vehicle data and whether walk-ins start accepted or in progress before adding a route.
-- Vendor money: current earnings and pending payouts are mock values. No payment, refund, settlement or payout model exists. Booking totals are not paid revenue.
+- Vendor walk-ins now use an owner-only, idempotent creation endpoint with guest snapshots and slot reservation; see [Owner operations](OWNER_OPERATIONS.md).
+- Vendor money uses completed booking totals for today and the trailing seven days. No payment, refund, settlement or payout model exists; booking totals are not paid revenue.
 - Open-now filter, shop about text and next-available summary lack a complete backend contract. Need opening-hours/timezone and metadata fields; use explicit unknown states meanwhile.
-- Owner service editing/deactivation and owner-specific availability reads are missing. The collection covers current creation/replacement only.
-- Availability replacement needs transaction/concurrency protection and prevention of removal of reserved slots before production use with active bookings.
-- Push delivery is not implemented just by registering FCM tokens. Notification list/read APIs can be integrated now.
+- Owner service editing/deactivation is still missing. Owner service and availability reads now complement creation/replacement.
+- Availability replacement now uses a transaction and preserves reserved slots; exercise concurrent booking/update behavior with the Firestore emulator before release.
+- Push delivery is not implemented just by registering FCM tokens. Notification list/read APIs are integrated; fake FCM token registration was removed.
 - Support tickets, AI assistance, QR behavior and published policy content need defined workflows/content before APIs are added.
-- Lists generally have limits but no cursor pagination. Notification mark-all caps at 500. Add pagination/history contracts for scale.
+- Mobile lists currently request bounded pages; Admin list screens support cursor pagination. Notification mark-all caps at 500. Add pagination/history contracts for scale.
 
 ## Handoff
 

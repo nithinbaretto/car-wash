@@ -5,13 +5,14 @@ import 'package:flutter/services.dart';
 
 import '../../core/models/user_role.dart';
 import '../../core/services/app_session.dart';
-import '../../core/services/mock_data.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../core/widgets/buttons.dart';
 import '../customer/location/location_picker_screen.dart';
-import '../vendor/onboarding/vendor_onboarding_screen.dart';
+import '../vendor/vendor_shell.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -32,6 +33,8 @@ class _OtpScreenState extends State<OtpScreen> {
   Timer? _timer;
   String? _error;
   bool _syncing = false;
+  bool _resending = false;
+  AuthService? _auth;
 
   @override
   void initState() {
@@ -41,8 +44,24 @@ class _OtpScreenState extends State<OtpScreen> {
     }
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _nodes.first.requestFocus();
+      if (!mounted) return;
+      _auth = SessionScope.of(context).authService;
+      _auth!.addListener(_onAutomaticVerification);
+      if (_auth!.hasAutomaticCredential) {
+        _verify();
+      } else {
+        _nodes.first.requestFocus();
+      }
     });
+  }
+
+  void _onAutomaticVerification() {
+    if (mounted &&
+        !_syncing &&
+        !_resending &&
+        (_auth?.hasAutomaticCredential ?? false)) {
+      _verify();
+    }
   }
 
   void _onFocusChange() {
@@ -97,7 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _onChanged(int index, String value) {
-    if (_syncing) return;
+    if (_syncing || _resending) return;
     _syncing = true;
     _error = null;
 
@@ -137,7 +156,8 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   KeyEventResult _onKey(int index, KeyEvent event) {
-    final isBack = event.logicalKey == LogicalKeyboardKey.backspace ||
+    final isBack =
+        event.logicalKey == LogicalKeyboardKey.backspace ||
         event.logicalKey == LogicalKeyboardKey.delete;
     if (event is! KeyDownEvent || !isBack) return KeyEventResult.ignored;
 
@@ -159,21 +179,70 @@ class _OtpScreenState extends State<OtpScreen> {
     return KeyEventResult.ignored;
   }
 
-  void _verify() {
-    if (_otp != MockData.otpCode) {
-      setState(() => _error = 'Invalid code. Try ${MockData.otpCode}');
-      return;
-    }
+  Future<void> _resend() async {
+    if (_resending || _syncing || _seconds > 0) return;
     final session = SessionScope.of(context);
-    session.completeLogin();
-    final route = session.role == UserRole.vendor
-        ? VendorOnboardingScreen.route
-        : LocationPickerScreen.route;
-    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
+    setState(() {
+      _resending = true;
+      _error = null;
+    });
+    try {
+      await session.authService.requestPhoneOtp(
+        phone: session.phone,
+        resend: true,
+      );
+      if (!mounted) return;
+      _clearFrom(0);
+      _startTimer();
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = error is ApiException
+              ? error.message
+              : 'Could not resend the code. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _resending = false);
+        _onAutomaticVerification();
+      }
+    }
+  }
+
+  Future<void> _verify() async {
+    if (_syncing || _resending) return;
+    setState(() {
+      _syncing = true;
+      _error = null;
+    });
+
+    final session = SessionScope.of(context);
+    final success = await session.loginWithPhoneOtp(
+      name: session.name,
+      phone: session.phone,
+      otp: _otp,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      final route = session.role == UserRole.vendor
+          ? VendorShell.route
+          : LocationPickerScreen.route;
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
+    } else {
+      setState(() {
+        _syncing = false;
+        _error =
+            session.errorMessage ?? 'Verification failed. Please try again.';
+      });
+    }
   }
 
   @override
   void dispose() {
+    _auth?.removeListener(_onAutomaticVerification);
     _timer?.cancel();
     for (final c in _digits) {
       c.dispose();
@@ -189,7 +258,7 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final session = SessionScope.of(context);
-    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    final inset = MediaQuery.paddingOf(context).bottom;
     final mm = (_seconds ~/ 60).toString().padLeft(2, '0');
     final ss = (_seconds % 60).toString().padLeft(2, '0');
 
@@ -235,7 +304,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '+91 ${session.phone}',
+                    session.phone,
                     style: AppText.ui(
                       size: 16,
                       weight: FontWeight.w700,
@@ -272,12 +341,16 @@ class _OtpScreenState extends State<OtpScreen> {
                           const SizedBox(height: 14),
                           Row(
                             children: List.generate(6, (index) {
-                              final filled = _plain(_digits[index].text).isNotEmpty;
+                              final filled = _plain(
+                                _digits[index].text,
+                              ).isNotEmpty;
                               final focused = _nodes[index].hasFocus;
                               final hasError = _error != null;
                               return Expanded(
                                 child: Padding(
-                                  padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
+                                  padding: EdgeInsets.only(
+                                    right: index == 5 ? 0 : 8,
+                                  ),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 160),
                                     height: 62,
@@ -290,18 +363,20 @@ class _OtpScreenState extends State<OtpScreen> {
                                         color: hasError
                                             ? AppColors.heart
                                             : focused
-                                                ? AppColors.primary
-                                                : filled
-                                                    ? AppColors.primarySoft
-                                                    : AppColors.border,
+                                            ? AppColors.primary
+                                            : filled
+                                            ? AppColors.primarySoft
+                                            : AppColors.border,
                                         width: focused || hasError ? 1.6 : 1,
                                       ),
                                     ),
                                     alignment: Alignment.center,
                                     child: Focus(
-                                      onKeyEvent: (_, event) => _onKey(index, event),
+                                      onKeyEvent: (_, event) =>
+                                          _onKey(index, event),
                                       child: TextField(
                                         controller: _digits[index],
+                                        enabled: !_syncing && !_resending,
                                         focusNode: _nodes[index],
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.number,
@@ -323,13 +398,18 @@ class _OtpScreenState extends State<OtpScreen> {
                                           isCollapsed: true,
                                         ),
                                         onTap: () {
-                                          final digit = _plain(_digits[index].text);
-                                          _digits[index].selection = TextSelection(
-                                            baseOffset: 0,
-                                            extentOffset: _zwsp.length + digit.length,
+                                          final digit = _plain(
+                                            _digits[index].text,
                                           );
+                                          _digits[index].selection =
+                                              TextSelection(
+                                                baseOffset: 0,
+                                                extentOffset:
+                                                    _zwsp.length + digit.length,
+                                              );
                                         },
-                                        onChanged: (value) => _onChanged(index, value),
+                                        onChanged: (value) =>
+                                            _onChanged(index, value),
                                       ),
                                     ),
                                   ),
@@ -359,9 +439,11 @@ class _OtpScreenState extends State<OtpScreen> {
                                     ),
                                   )
                                 : TextButton(
-                                    onPressed: _startTimer,
+                                    onPressed: _resending || _syncing
+                                        ? null
+                                        : _resend,
                                     child: Text(
-                                      'Resend OTP',
+                                      _resending ? 'Sending…' : 'Resend OTP',
                                       style: AppText.ui(
                                         size: 15,
                                         weight: FontWeight.w700,
@@ -379,9 +461,17 @@ class _OtpScreenState extends State<OtpScreen> {
                     child: Column(
                       children: [
                         AppPrimaryButton(
-                          label: 'Verify',
+                          label: _syncing ? 'Verifying…' : 'Verify',
                           trailing: const Icon(Icons.arrow_forward_rounded),
-                          onPressed: _complete ? _verify : null,
+                          onPressed:
+                              !_syncing &&
+                                  !_resending &&
+                                  (_complete ||
+                                      session
+                                          .authService
+                                          .hasAutomaticCredential)
+                              ? _verify
+                              : null,
                         ),
                         const SizedBox(height: 10),
                         Text(

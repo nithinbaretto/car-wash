@@ -20,6 +20,20 @@
       ],
       "rewrites": [
         {
+          "source": "/v1/**",
+          "function": {
+            "functionId": "api",
+            "region": "asia-south1"
+          }
+        },
+        {
+          "source": "/api/**",
+          "function": {
+            "functionId": "api",
+            "region": "asia-south1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }

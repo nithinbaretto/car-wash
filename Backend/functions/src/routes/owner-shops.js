@@ -1,5 +1,6 @@
 const {Router} = require("express");
 const {requireObject, rejectUnknownFields, requiredString, optionalHttpsUrl, requiredInteger, isValidTime, isValidDate, validateAddress, validateLocation} = require("../utils/validation");
+const {mergeAvailability} = require("../services/availability");
 const {encodeGeohash} = require("../utils/geohash");
 const {serializeShop} = require("../serializers/shops");
 const {requireOwner, requireShopOwner} = require("../middleware/authorization");
@@ -9,6 +10,8 @@ const {asyncRoute} = require("../utils/async-route");
 const {requireAuth} = require("../middleware/auth");
 const {admin, db} = require("../config/firebase");
 const {SERVICE_CATEGORIES} = require("../constants");
+
+const {readOnboarding, onboardingData} = require("../services/shop-onboarding");
 
 const router = Router();
 
@@ -129,6 +132,9 @@ router.post("/v1/owner/car-washes/:carWashId/resubmit", requireAuth, asyncRoute(
     if (!latest.exists || latest.data().status !== "rejected") {
       throw new ApiError(409, "SHOP_RESUBMISSION_INVALID", "Only rejected car washes can be resubmitted.");
     }
+    if (!latest.data().ownerUids.includes(request.auth.uid)) throw new ApiError(403, "SHOP_ACCESS_DENIED", "You do not manage this car wash.");
+    const readiness = onboardingData(latest.data(), await readOnboarding(shop.ref, transaction)).onboarding;
+    if (!readiness.complete) throw new ApiError(409, "SHOP_ONBOARDING_INCOMPLETE", readiness.issues.join(" "), {issues: readiness.issues});
     transaction.update(shop.ref, {
       status: "pending_review",
       review: {stateChangedAt: now, stateChangedBy: request.auth.uid, decision: "resubmit", reason: null},
@@ -168,11 +174,13 @@ router.post("/v1/owner/car-washes/:carWashId/services", requireAuth, asyncRoute(
     updatedAt: now,
   };
   await db.runTransaction(async (transaction) => {
+    const currentShop = await transaction.get(shop.ref);
     transaction.create(reference, service);
-    const minPriceMinor = shop.data().minPriceMinor;
-    if (minPriceMinor === null || priceMinor < minPriceMinor) {
-      transaction.update(shop.ref, {minPriceMinor: priceMinor, updatedAt: now});
-    }
+    const minPriceMinor = currentShop.data().minPriceMinor;
+    transaction.update(shop.ref, {
+      minPriceMinor: service.active && (minPriceMinor == null || priceMinor < minPriceMinor) ? priceMinor : minPriceMinor ?? null,
+      updatedAt: now,
+    });
   });
   response.status(201).json({success: true, data: {service: {id: reference.id, ...service}}, requestId: request.requestId});
 }));
@@ -185,35 +193,16 @@ router.put("/v1/owner/car-washes/:carWashId/availability/:date", requireAuth, as
   }
   requireObject(request.body);
   rejectUnknownFields(request.body, ["slots"]);
-  if (!Array.isArray(request.body.slots) || request.body.slots.length === 0 || request.body.slots.length > 100) {
-    throw new ApiError(400, "VALIDATION_ERROR", "slots are invalid", {slots: "invalid"});
-  }
-  const existingAvailability = await shop.ref.collection("availability").doc(date).get();
-  const existingSlots = new Map((existingAvailability.exists ? existingAvailability.data().slots : [])
-    .map((slot) => [slot.startAt, slot]));
-  const slots = request.body.slots.map((slot, index) => {
-    requireObject(slot);
-    rejectUnknownFields(slot, ["startAt", "endAt", "capacity", "enabled"]);
-    if (!isValidTime(slot.startAt) || !isValidTime(slot.endAt) || slot.startAt >= slot.endAt) {
-      throw new ApiError(400, "VALIDATION_ERROR", "slot time is invalid", {[`slots.${index}`]: "invalid"});
-    }
-    const existing = existingSlots.get(slot.startAt);
-    const capacity = requiredInteger(slot.capacity, `slots.${index}.capacity`, 1, 100);
-    if (existing && (existing.endAt !== slot.endAt || capacity < existing.bookedCount)) {
-      throw new ApiError(409, "AVAILABILITY_CONFLICT", "Reserved slots cannot be shortened or reduced below bookings.");
-    }
-    return {
-      startAt: slot.startAt,
-      endAt: slot.endAt,
-      capacity,
-      bookedCount: existing ? existing.bookedCount : 0,
-      enabled: slot.enabled !== false,
-    };
-  });
-  await shop.ref.collection("availability").doc(date).set({
-    date,
-    slots,
-    updatedAt: admin.firestore.Timestamp.now(),
+  const reference = shop.ref.collection("availability").doc(date);
+  const slots = await db.runTransaction(async (transaction) => {
+    const latestShop = await transaction.get(shop.ref);
+    if (!latestShop.exists || !latestShop.data().ownerUids.includes(request.auth.uid)) throw new ApiError(403, "SHOP_ACCESS_DENIED", "You do not manage this car wash.");
+    const existing = await transaction.get(reference);
+    const merged = mergeAvailability(request.body.slots, existing.exists ? existing.data().slots || [] : []);
+    const now = admin.firestore.Timestamp.now();
+    transaction.set(reference, {date, slots: merged, updatedAt: now});
+    transaction.update(shop.ref, {updatedAt: now});
+    return merged;
   });
   response.status(200).json({success: true, data: {date, slots}, requestId: request.requestId});
 }));

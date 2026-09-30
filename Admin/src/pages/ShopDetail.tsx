@@ -30,10 +30,11 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import {api, money, toDate} from '../api/client';
-import {Shop, Service, AvailabilitySlot, User} from '../types';
+import {Shop, Service, AvailabilitySlot, User, ShopOnboarding} from '../types';
 import {PageHeader} from '../components/layout/PageHeader';
 import {StatusBadge} from '../components/common/StatusBadge';
 import {ReviewModal} from '../components/shops/ReviewModal';
+import {OnboardingReadiness} from '../components/shops/OnboardingReadiness';
 import {TableSkeleton} from '../components/common/LoadingSkeleton';
 
 export const ShopDetail: React.FC = () => {
@@ -41,7 +42,7 @@ export const ShopDetail: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Kolkata'}));
   const [showReview, setShowReview] = useState(false);
 
   // Shop details + owners
@@ -51,18 +52,19 @@ export const ShopDetail: React.FC = () => {
     error: shopError,
   } = useQuery({
     queryKey: ['shop', id],
-    queryFn: () => api<{carWash: Shop; owners: User[]}>(`/v1/admin/car-washes/${id}`),
+    queryFn: () => api<{carWash: Shop; owners: User[]; onboarding: ShopOnboarding}>(`/v1/admin/car-washes/${id}`),
   });
 
   // Services catalog
-  const {data: servicesData, isLoading: isServicesLoading} = useQuery({
+  const {data: servicesData, isLoading: isServicesLoading, error: servicesError} = useQuery({
     queryKey: ['services', id],
     queryFn: () => api<{services: Service[]}>(`/v1/admin/car-washes/${id}/services`),
   });
 
   // Availability slots for selected date
-  const {data: availData, isLoading: isAvailLoading} = useQuery({
+  const {data: availData, isLoading: isAvailLoading, error: availabilityError} = useQuery({
     queryKey: ['availability', id, date],
+    enabled: Boolean(date),
     queryFn: () => api<{date: string; slots: AvailabilitySlot[]}>(`/v1/admin/car-washes/${id}/availability?date=${date}`),
   });
 
@@ -107,6 +109,7 @@ export const ShopDetail: React.FC = () => {
             variant="contained"
             color="primary"
             onClick={() => setShowReview(true)}
+            disabled={shop.status === 'rejected'}
             startIcon={<Edit3 size={16} />}
             sx={{borderRadius: 2, fontWeight: 700}}
           >
@@ -115,6 +118,16 @@ export const ShopDetail: React.FC = () => {
         }
       />
 
+      <Box sx={{mb: 3}}><OnboardingReadiness onboarding={shopData.onboarding} /></Box>
+      {shop.review?.reason && <Alert severity={shop.status === 'rejected' ? 'error' : 'info'} sx={{mb: 3}}>
+        Review reason: {shop.review.reason}
+      </Alert>}
+      {shop.status === 'rejected' && <Alert severity="info" sx={{mb: 3}}>Awaiting owner corrections and resubmission.</Alert>}
+      {shop.location && <Button
+        component="a" target="_blank" rel="noopener noreferrer" sx={{mb: 2}}
+        href={`https://www.google.com/maps/search/?api=1&query=${shop.location.latitude},${shop.location.longitude}`}
+        startIcon={<MapPin size={16} />}
+      >View submitted map pin</Button>}
       {/* Hub Hero Card */}
       <Card sx={{mb: 3.5, overflow: 'hidden'}}>
         <Box
@@ -263,7 +276,7 @@ export const ShopDetail: React.FC = () => {
                 />
               </Box>
 
-              {services.length === 0 ? (
+              {servicesError ? <Alert severity="error">{servicesError.message}</Alert> : isServicesLoading ? <LinearProgress /> : services.length === 0 ? (
                 <Box sx={{p: 4, textAlign: 'center'}}>
                   <Typography color="text.secondary">No service packages registered yet.</Typography>
                 </Box>
@@ -289,6 +302,7 @@ export const ShopDetail: React.FC = () => {
                           {money(srv.priceMinor)}
                         </Typography>
                       </Box>
+                      <Chip label={srv.active === false ? 'Inactive service' : srv.category || 'Active service'} size="small" sx={{mt: 1}} />
                       {srv.description && (
                         <Typography variant="body2" color="text.secondary" sx={{mt: 0.5, lineHeight: 1.4}}>
                           {srv.description}
@@ -340,7 +354,7 @@ export const ShopDetail: React.FC = () => {
                 />
               </Box>
 
-              {slots.length === 0 ? (
+              {availabilityError ? <Alert severity="error">{availabilityError.message}</Alert> : isAvailLoading ? <LinearProgress /> : slots.length === 0 ? (
                 <Box sx={{p: 4, textAlign: 'center'}}>
                   <Typography color="text.secondary">No availability data configured for {date}.</Typography>
                 </Box>
@@ -372,6 +386,7 @@ export const ShopDetail: React.FC = () => {
                             <Typography variant="caption" sx={{fontWeight: 700}}>
                               {slot.bookedCount} / {slot.capacity} Booked
                             </Typography>
+                            {slot.enabled === false && <Chip label="DISABLED" size="small" />}
                             {isFull && (
                               <Chip
                                 label="BUSY"

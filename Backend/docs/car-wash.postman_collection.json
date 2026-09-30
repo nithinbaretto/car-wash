@@ -669,6 +669,75 @@
           }
         }
       }
+    },
+    {
+      "name": "Owner services",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/services"
+      }
+    },
+    {
+      "name": "Owner availability",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/availability?date={{date}}"
+      }
+    },
+    {
+      "name": "Owner completed booking totals",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/earnings?date={{date}}"
+      }
+    },
+    {
+      "name": "Create owner walk-in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ownerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/owner/car-washes/{{shopId}}/walk-ins",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Guest customer\",\n  \"vehicle\": \"MH12 AB1234\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"date\": \"{{date}}\",\n  \"startAt\": \"10:00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
     }
   ]
 }

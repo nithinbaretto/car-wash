@@ -166,7 +166,6 @@ export const Overview: React.FC = () => {
             value={stats.users}
             subtitle="Customers & shop owners"
             icon={<Users size={22} />}
-            trend={{value: '12.4%', positive: true, label: 'MoM Growth'}}
             accentColor="#6366F1"
             onClick={() => navigate('/users')}
           />
@@ -178,7 +177,6 @@ export const Overview: React.FC = () => {
             value={stats.shops.active}
             subtitle="Verified partner facilities"
             icon={<Store size={22} />}
-            trend={{value: '4 new', positive: true, label: 'This month'}}
             accentColor="#10B981"
             onClick={() => navigate('/shops?status=active')}
           />
@@ -201,7 +199,6 @@ export const Overview: React.FC = () => {
             value={stats.todayBookings}
             subtitle="Scheduled for current date"
             icon={<CalendarCheck size={22} />}
-            trend={{value: '18%', positive: true, label: 'vs yesterday'}}
             accentColor="#06B6D4"
             onClick={() => navigate('/bookings')}
           />
@@ -224,7 +221,6 @@ export const Overview: React.FC = () => {
             value={stats.bookings.completed}
             subtitle="Successfully fulfilled"
             icon={<CheckCircle2 size={22} />}
-            trend={{value: '98.2%', positive: true, label: 'Success rate'}}
             accentColor="#10B981"
             onClick={() => navigate('/bookings?status=completed')}
           />
@@ -237,7 +233,7 @@ export const Overview: React.FC = () => {
           <BookingStatusBar stats={stats.bookings} />
         </Grid>
         <Grid size={{xs: 12, lg: 6}}>
-          <WeeklyActivityChart />
+          <WeeklyActivityChart days={stats.weeklyBookings} />
         </Grid>
       </Grid>
     </Box>

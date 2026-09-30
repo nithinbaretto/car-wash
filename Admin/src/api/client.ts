@@ -1,16 +1,6 @@
 import {auth} from '../firebase';
 import {Timestamp} from '../types';
-import {
-  mockDashboardStats,
-  mockShops,
-  mockServices,
-  mockAvailabilitySlots,
-  mockBookings,
-  mockUsers,
-  mockAuditLogs,
-} from './mockData';
-
-const baseUrl = import.meta.env.VITE_API_URL || '';
+const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 export const toDate = (value: Timestamp | string | null | undefined): string => {
   if (!value) return '—';
@@ -68,122 +58,31 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error('Sign in is required.');
   }
 
+  const user = auth.currentUser;
   const request = async (token: string) => {
-    const response = await fetch(`${baseUrl}${path}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(init.headers || {}),
-      },
-      ...init,
-    });
-    return {response, body: await response.json().catch(() => ({}))};
+    const headers = new Headers(init.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+    const response = await fetch(`${baseUrl}${path}`, {...init, headers});
+    const body = await response.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      throw new Error('The API returned an invalid response. Check the API URL and server configuration.');
+    }
+    return {response, body};
   };
 
-  let result = await request(await auth.currentUser.getIdToken());
+  let result = await request(await user.getIdToken());
   // Custom claims are minted into new ID tokens. Retry once with a forced
   // refresh so a just-provisioned super-admin account works immediately.
-  if (result.response.status === 403 && result.body.error?.code === 'SUPER_ADMIN_REQUIRED') {
-    result = await request(await auth.currentUser.getIdToken(true));
+  if (result.response.status === 401 || (result.response.status === 403 && result.body.error?.code === 'SUPER_ADMIN_REQUIRED')) {
+    result = await request(await user.getIdToken(true));
   }
 
   const {response, body} = result;
   if (!response.ok) {
     throw new Error(body.error?.message || 'Request failed.');
   }
+  if (auth.currentUser?.uid !== user.uid) throw new Error('The signed-in account changed. Please retry.');
+  if (body.success !== true || !('data' in body)) throw new Error('The API returned an invalid response.');
   return body.data as T;
-}
-
-function handleMockRequest<T>(path: string, init: RequestInit): T {
-  const cleanPath = path.split('?')[0];
-
-  if (cleanPath === '/v1/admin/me') {
-    return {
-      admin: {
-        uid: 'super_admin_demo',
-        email: 'superadmin@cleanwheel.internal',
-        displayName: 'Aayush Shah (Super Admin)',
-        permissions: ['super_admin'],
-      },
-    } as T;
-  }
-
-  if (cleanPath === '/v1/admin/dashboard') {
-    return mockDashboardStats as T;
-  }
-
-  if (cleanPath === '/v1/admin/car-washes') {
-    const url = new URL(`http://local${path}`);
-    const status = url.searchParams.get('status');
-    const id = url.searchParams.get('id');
-    let list = [...mockShops];
-    if (status) list = list.filter((s) => s.status === status);
-    if (id) list = list.filter((s) => s.id.toLowerCase().includes(id.toLowerCase()) || s.name.toLowerCase().includes(id.toLowerCase()));
-    return {carWashes: list, hasMore: false, nextCursor: null} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/car-washes/') && cleanPath.endsWith('/services')) {
-    const shopId = cleanPath.split('/')[4];
-    return {services: mockServices[shopId] || mockServices['cw_01']} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/car-washes/') && cleanPath.endsWith('/availability')) {
-    const url = new URL(`http://local${path}`);
-    return {date: url.searchParams.get('date') || 'today', slots: mockAvailabilitySlots} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/car-washes/') && cleanPath.endsWith('/review')) {
-    return {success: true} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/car-washes/')) {
-    const shopId = cleanPath.split('/')[4];
-    const shop = mockShops.find((s) => s.id === shopId) || mockShops[0];
-    const owners = mockUsers.filter((u) => shop.ownerUids.includes(u.uid));
-    return {carWash: shop, owners: owners.length ? owners : [mockUsers[0]]} as T;
-  }
-
-  if (cleanPath === '/v1/admin/bookings') {
-    const url = new URL(`http://local${path}`);
-    const status = url.searchParams.get('status');
-    const id = url.searchParams.get('id');
-    let list = [...mockBookings];
-    if (status) list = list.filter((b) => b.status === status);
-    if (id) list = list.filter((b) => b.id.toLowerCase().includes(id.toLowerCase()));
-    return {bookings: list, hasMore: false, nextCursor: null} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/bookings/')) {
-    const bookingId = cleanPath.split('/')[4];
-    const booking = mockBookings.find((b) => b.id === bookingId) || mockBookings[0];
-    return {booking} as T;
-  }
-
-  if (cleanPath === '/v1/admin/users') {
-    const url = new URL(`http://local${path}`);
-    const role = url.searchParams.get('role');
-    const status = url.searchParams.get('status');
-    let list = [...mockUsers];
-    if (role) list = list.filter((u) => u.roles.includes(role));
-    if (status) list = list.filter((u) => u.accountStatus === status);
-    return {users: list, hasMore: false, nextCursor: null} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/users/') && cleanPath.endsWith('/status')) {
-    return {success: true} as T;
-  }
-
-  if (cleanPath.startsWith('/v1/admin/users/')) {
-    const uid = cleanPath.split('/')[4];
-    const user = mockUsers.find((u) => u.uid === uid) || mockUsers[0];
-    const owned = mockShops.filter((s) => s.ownerUids.includes(user.uid));
-    const userBookings = mockBookings.filter((b) => b.customerId === user.uid);
-    return {user, ownedCarWashes: owned, bookings: userBookings} as T;
-  }
-
-  if (cleanPath === '/v1/admin/audit-logs') {
-    return {auditLogs: mockAuditLogs, hasMore: false, nextCursor: null} as T;
-  }
-
-  return {} as T;
 }

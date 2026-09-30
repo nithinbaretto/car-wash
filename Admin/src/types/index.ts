@@ -2,6 +2,7 @@ export type Timestamp = {
   seconds?: number;
   _seconds?: number;
   nanoseconds?: number;
+  _nanoseconds?: number;
 };
 
 export type ShopStatus = 'pending_review' | 'active' | 'rejected' | 'suspended';
@@ -26,12 +27,21 @@ export interface ShopAddress {
   postalCode?: string;
 }
 
+export interface ShopOnboarding {
+  complete: boolean;
+  issues: string[];
+  serviceCount: number;
+  availabilityDates: string[];
+}
+
 export interface Shop {
   id: string;
   name: string;
   status: ShopStatus;
   ownerUids: string[];
   contactPhone?: string;
+  categories?: string[];
+  location?: {latitude: number; longitude: number};
   address?: ShopAddress;
   createdAt: Timestamp | string;
   updatedAt?: Timestamp | string;
@@ -49,6 +59,8 @@ export interface Service {
   description?: string;
   priceMinor: number;
   durationMinutes: number;
+  category?: string;
+  active?: boolean;
   createdAt?: Timestamp | string;
 }
 
@@ -57,6 +69,7 @@ export interface AvailabilitySlot {
   endAt: string;
   capacity: number;
   bookedCount: number;
+  enabled?: boolean;
 }
 
 export interface Booking {
@@ -135,6 +148,7 @@ export interface DashboardStats {
     cancelled: number;
   };
   todayBookings: number;
+  weeklyBookings?: {date: string; bookings: number}[];
   generatedAt?: Timestamp | string;
 }
 

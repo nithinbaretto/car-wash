@@ -8,6 +8,8 @@ const {asyncRoute} = require("../utils/async-route");
 const {requireAuth} = require("../middleware/auth");
 const {admin, db} = require("../config/firebase");
 
+const {readOnboarding, onboardingData} = require("../services/shop-onboarding");
+
 const router = Router();
 const shopStatuses = ["pending_review", "active", "rejected", "suspended"];
 const bookingStatuses = ["pending", "accepted", "rejected", "in_progress", "completed", "cancelled"];
@@ -37,8 +39,18 @@ router.get("/v1/admin/me", ...protect(async (req, res) => {
 router.get("/v1/admin/dashboard", ...protect(async (req, res) => {
   const count = (query) => query.count().get().then((x) => x.data().count);
   const today = new Date().toLocaleDateString("en-CA", {timeZone: "Asia/Kolkata"});
-  const values = await Promise.all([count(db.collection("users")), ...shopStatuses.map((s) => count(db.collection("carWashes").where("status", "==", s))), ...bookingStatuses.map((s) => count(db.collection("bookings").where("status", "==", s))), count(db.collection("bookings").where("availabilityDate", "==", today))]);
-  res.json({success: true, data: {users: values[0], shops: Object.fromEntries(shopStatuses.map((s, i) => [s, values[i + 1]])), bookings: Object.fromEntries(bookingStatuses.map((s, i) => [s, values[i + 1 + shopStatuses.length]])), todayBookings: values.at(-1), generatedAt: admin.firestore.Timestamp.now()}, requestId: req.requestId});
+  const endDay = new Date(`${today}T00:00:00Z`);
+  const dates = Array.from({length: 7}, (_, index) => new Date(endDay.getTime() - (6 - index) * 86_400_000).toISOString().slice(0, 10));
+  const [values, weeklyCounts] = await Promise.all([
+    Promise.all([count(db.collection("users")), ...shopStatuses.map((s) => count(db.collection("carWashes").where("status", "==", s))), ...bookingStatuses.map((s) => count(db.collection("bookings").where("status", "==", s)))]),
+    Promise.all(dates.map((date) => count(db.collection("bookings").where("availabilityDate", "==", date)))),
+  ]);
+  res.json({success: true, data: {
+    users: values[0], shops: Object.fromEntries(shopStatuses.map((s, i) => [s, values[i + 1]])),
+    bookings: Object.fromEntries(bookingStatuses.map((s, i) => [s, values[i + 1 + shopStatuses.length]])),
+    todayBookings: weeklyCounts.at(-1), weeklyBookings: dates.map((date, index) => ({date, bookings: weeklyCounts[index]})),
+    generatedAt: admin.firestore.Timestamp.now(),
+  }, requestId: req.requestId});
 }));
 
 router.get("/v1/admin/car-washes", ...protect(async (req, res) => {
@@ -53,7 +65,7 @@ router.get("/v1/admin/car-washes", ...protect(async (req, res) => {
 router.get("/v1/admin/car-washes/:carWashId", ...protect(async (req, res) => {
   const shop = await db.collection("carWashes").doc(req.params.carWashId).get(); if (!shop.exists) throw new ApiError(404, "CAR_WASH_NOT_FOUND", "Car wash was not found.");
   const ownerDocs = await Promise.all((shop.data().ownerUids || []).map((uid) => db.collection("users").doc(uid).get()));
-  res.json({success: true, data: {carWash: adminShop(shop.id, shop.data()), owners: ownerDocs.filter((x) => x.exists).map((x) => adminUser(x.id, x.data()))}, requestId: req.requestId});
+  res.json({success: true, data: {carWash: adminShop(shop.id, shop.data()), owners: ownerDocs.filter((x) => x.exists).map((x) => adminUser(x.id, x.data())), onboarding: onboardingData(shop.data(), await readOnboarding(shop.ref)).onboarding}, requestId: req.requestId});
 }));
 router.get("/v1/admin/car-washes/:carWashId/services", ...protect(async (req, res) => {
   const services = await db.collection("carWashes").doc(req.params.carWashId).collection("services").orderBy("createdAt", "desc").limit(limit(req.query.limit, 100)).get();
@@ -70,6 +82,10 @@ router.post("/v1/admin/car-washes/:carWashId/review", ...protect(async (req, res
   const ref = db.collection("carWashes").doc(req.params.carWashId); await db.runTransaction(async (tx) => { const doc = await tx.get(ref); if (!doc.exists) throw new ApiError(404, "CAR_WASH_NOT_FOUND", "Car wash was not found."); const shop = doc.data();
     if (expectedUpdatedAt && (!shop.updatedAt || shop.updatedAt.seconds !== expectedUpdatedAt.seconds || shop.updatedAt.nanoseconds !== (expectedUpdatedAt.nanoseconds || 0))) throw new ApiError(409, "SHOP_REVIEW_STALE", "Shop details changed. Reload before reviewing.");
     const valid = ((decision === "approve" || decision === "reject") && shop.status === "pending_review") || (decision === "suspend" && shop.status === "active") || (decision === "reactivate" && shop.status === "suspended"); if (!valid) throw new ApiError(409, "SHOP_REVIEW_INVALID", "This shop cannot transition with that decision.");
+    if (decision === "approve" || decision === "reactivate") {
+      const readiness = onboardingData(shop, await readOnboarding(ref, tx)).onboarding;
+      if (!readiness.complete) throw new ApiError(409, "SHOP_ONBOARDING_INCOMPLETE", readiness.issues.join(" "), {issues: readiness.issues});
+    }
     const now = admin.firestore.Timestamp.now(); tx.update(ref, {status: to[decision], review: {stateChangedAt: now, stateChangedBy: req.auth.uid, decision, reason: reason ? reason.trim() : null}, updatedAt: now}); tx.create(db.collection("auditLogs").doc(), auditRecord(req, `car_wash.${decision}`, "carWash", ref.id, {beforeStatus: shop.status, afterStatus: to[decision], reason: reason ? reason.trim() : null}));
   }); res.json({success: true, data: {carWashId: ref.id, status: to[decision]}, requestId: req.requestId});
 }));

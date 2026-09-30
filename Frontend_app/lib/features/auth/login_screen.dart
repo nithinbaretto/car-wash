@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/services/app_session.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/brand_mark.dart';
@@ -18,11 +19,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _name = TextEditingController(text: 'Shamil P');
+  final _name = TextEditingController();
   final _phone = TextEditingController();
   final _nameFocus = FocusNode();
   final _phoneFocus = FocusNode();
   bool _accepted = false;
+  bool _sending = false;
 
   @override
   void initState() {
@@ -41,20 +43,42 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   bool get _canSend {
-    return _name.text.trim().length >= 2 &&
-        _phone.text.trim().length == 10 &&
+    return !_sending &&
+        _name.text.trim().length >= 2 &&
+        _name.text.trim().length <= 80 &&
+        RegExp(r'^[6-9]\d{9}$').hasMatch(_phone.text.trim()) &&
         _accepted;
   }
 
-  void _sendOtp() {
+  Future<void> _sendOtp() async {
+    if (!_canSend) return;
     final session = SessionScope.of(context);
-    session.setProfile(name: _name.text.trim(), phone: _phone.text.trim());
-    Navigator.of(context).pushNamed(OtpScreen.route);
+    setState(() => _sending = true);
+    try {
+      final phone = '+91${_phone.text.trim()}';
+      await session.authService.requestPhoneOtp(phone: phone);
+      if (!mounted) return;
+      session.setProfile(name: _name.text.trim(), phone: phone);
+      Navigator.of(context).pushNamed(OtpScreen.route);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is ApiException
+                ? error.message
+                : 'Could not send the code. Please try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    final inset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: AppColors.primaryDeep,
@@ -128,6 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             focused: _nameFocus.hasFocus,
                             child: TextField(
                               controller: _name,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(80),
+                              ],
                               focusNode: _nameFocus,
                               onChanged: (_) => setState(() {}),
                               textCapitalization: TextCapitalization.words,
@@ -240,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         AppPrimaryButton(
-                          label: 'Send OTP',
+                          label: _sending ? 'Sending…' : 'Send OTP',
                           trailing: const Icon(Icons.arrow_forward_rounded),
                           onPressed: _canSend ? _sendOtp : null,
                         ),
@@ -307,10 +334,7 @@ class _CountryChip extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       alignment: Alignment.center,
-      child: Text(
-        '+91',
-        style: AppText.ui(size: 16, weight: FontWeight.w700),
-      ),
+      child: Text('+91', style: AppText.ui(size: 16, weight: FontWeight.w700)),
     );
   }
 }
@@ -347,7 +371,11 @@ class _TermsTile extends StatelessWidget {
                   ),
                 ),
                 child: accepted
-                    ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                    ? const Icon(
+                        Icons.check_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      )
                     : null,
               ),
               const SizedBox(width: 12),

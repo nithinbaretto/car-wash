@@ -1,5 +1,6 @@
 {
   "indexes": [
+    {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"carWashId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"completedAt","order":"ASCENDING"},{"fieldPath":"priceMinor","order":"ASCENDING"}]},
     {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"carWashId","order":"ASCENDING"},{"fieldPath":"availabilityDate","order":"ASCENDING"},{"fieldPath":"scheduledAt","order":"ASCENDING"}]},
     {"collectionGroup":"bookings","queryScope":"COLLECTION","fields":[{"fieldPath":"carWashId","order":"ASCENDING"},{"fieldPath":"availabilityDate","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"scheduledAt","order":"ASCENDING"}]},
     {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"recipientUid","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},

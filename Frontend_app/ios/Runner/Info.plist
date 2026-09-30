@@ -49,5 +49,12 @@
 	<string>We use your location to show car wash shops near you.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We use your location to show car wash shops near you.</string>
+	<key>CFBundleURLTypes</key>
+	<array><dict>
+		<key>CFBundleURLSchemes</key>
+		<array><string>app-1-653869969705-ios-e786171d14ccfdf3bf8738</string><string>com.googleusercontent.apps.653869969705-vjib8hichp25640ks3r8g9501let7ark</string></array>
+	</dict></array>
+	<key>UIBackgroundModes</key>
+	<array><string>remote-notification</string></array>
 </dict>
 </plist>

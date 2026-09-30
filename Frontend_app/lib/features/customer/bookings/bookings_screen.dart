@@ -18,16 +18,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
   int _tab = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final session = SessionScope.of(context);
+      session.loadBookings();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final session = SessionScope.of(context);
-    final filtered = session.bookings.where((booking) {
-      if (_tab == 0) {
-        return booking.status == BookingStatus.upcoming ||
-            booking.status == BookingStatus.inProgress;
-      }
-      return booking.status == BookingStatus.completed ||
-          booking.status == BookingStatus.cancelled;
-    }).toList();
+    final upcomingList = session.bookings
+        .where((b) => b.status.isOngoing)
+        .toList();
+    final pastList = session.pastBookings.isNotEmpty
+        ? session.pastBookings
+        : session.bookings.where((b) => b.status.isPast).toList();
+
+    final filtered = _tab == 0 ? upcomingList : pastList;
 
     return SafeArea(
       child: Padding(
@@ -35,10 +45,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bookings',
-              style: AppText.display(),
-            ),
+            Text('Bookings', style: AppText.display()),
             const SizedBox(height: 4),
             Text(
               'Your upcoming and past washes',
@@ -53,30 +60,104 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ),
               child: Row(
                 children: [
-                  _seg('Upcoming', 0),
-                  _seg('Past', 1),
+                  _seg('Upcoming (${upcomingList.length})', 0),
+                  _seg('Past (${pastList.length})', 1),
                 ],
               ),
             ),
             const SizedBox(height: 16),
+            if (session.loadErrors['bookings'] != null) ...[
+              Text(
+                session.loadErrors['bookings']!,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+              TextButton(
+                onPressed: () => session.loadBookings(),
+                child: const Text('Retry'),
+              ),
+            ],
             Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No bookings here yet.',
-                        style: GoogleFonts.figtree(color: AppColors.muted),
+              child: RefreshIndicator(
+                onRefresh: () => session.loadBookings(),
+                child: filtered.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: Center(
+                              child: Text(
+                                _tab == 0
+                                    ? 'No upcoming bookings.\nExplore nearby shops to book a wash.'
+                                    : 'No past booking history yet.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.figtree(
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) => _BookingCard(
+                          booking: filtered[index],
+                          onCancel: () =>
+                              _confirmCancel(context, session, filtered[index]),
+                        ),
                       ),
-                    )
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) => _BookingCard(booking: filtered[index]),
-                    ),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCancel(
+    BuildContext context,
+    AppSession session,
+    Booking booking,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel Booking?'),
+        content: Text(
+          'Are you sure you want to cancel your booking at ${booking.shopName}? The reserved time slot will be released.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Keep Booking'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        await session.cancelBooking(booking.id);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Booking cancelled successfully.')),
+        );
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel booking: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   Widget _seg(String label, int value) {
@@ -106,56 +187,130 @@ class _BookingsScreenState extends State<BookingsScreen> {
 }
 
 class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.booking});
+  const _BookingCard({required this.booking, this.onCancel});
 
   final Booking booking;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
     final color = switch (booking.status) {
-      BookingStatus.upcoming => AppColors.primary,
-      BookingStatus.inProgress => AppColors.warning,
+      BookingStatus.pending => Colors.orange.shade800,
+      BookingStatus.accepted || BookingStatus.upcoming => AppColors.primary,
+      BookingStatus.inProgress => Colors.purple.shade700,
       BookingStatus.completed => AppColors.open,
-      BookingStatus.cancelled => AppColors.muted,
+      BookingStatus.cancelled || BookingStatus.rejected => AppColors.muted,
     };
 
+    final bgBadgeColor = color.withValues(alpha: 0.12);
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(AppAssets.carWashCard, width: 72, height: 72, fit: BoxFit.cover),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  booking.shopName,
-                  style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
-                ),
-                Text(booking.service, style: GoogleFonts.figtree(color: AppColors.muted, fontSize: 13)),
-                Text(booking.whenLabel, style: GoogleFonts.figtree(fontSize: 13)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Text('${booking.price}\$', style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(
-                booking.status.name,
-                style: GoogleFonts.figtree(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  AppAssets.carWashCard,
+                  width: 68,
+                  height: 68,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      booking.shopName,
+                      style: GoogleFonts.figtree(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      booking.service,
+                      style: GoogleFonts.figtree(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      booking.whenLabel,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    booking.displayPrice,
+                    style: GoogleFonts.figtree(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: bgBadgeColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      booking.status.label,
+                      style: GoogleFonts.figtree(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          if (booking.canCancel) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    side: const BorderSide(color: Colors.redAccent),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Cancel Request'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

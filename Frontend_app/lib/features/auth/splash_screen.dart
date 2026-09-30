@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/models/user_role.dart';
+import '../../core/services/app_session.dart';
 import '../../core/widgets/brand_mark.dart';
+import '../customer/customer_shell.dart';
+import '../vendor/vendor_shell.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,22 +21,55 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _loader;
+  AppSession? _session;
+  bool _navigated = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final session = SessionScope.of(context);
+    if (_session != session) {
+      _session?.removeListener(_navigateWhenReady);
+      _session = session;
+      session.addListener(_navigateWhenReady);
+    }
+  }
+
+  void _navigateWhenReady() {
+    final session = _session;
+    if (!mounted ||
+        _navigated ||
+        !_loader.isCompleted ||
+        session == null ||
+        !session.isInitialized) {
+      return;
+    }
+    _navigated = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final nextRoute = !session.loggedIn
+          ? OnboardingScreen.route
+          : session.role == UserRole.vendor
+          ? VendorShell.route
+          : CustomerShell.route;
+      Navigator.of(context).pushReplacementNamed(nextRoute);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _loader = AnimationController(
-      vsync: this,
-      duration: SplashScreen.loadDuration,
-    )..addStatusListener((status) {
-        if (status != AnimationStatus.completed || !mounted) return;
-        Navigator.of(context).pushReplacementNamed(OnboardingScreen.route);
-      });
+    _loader =
+        AnimationController(vsync: this, duration: SplashScreen.loadDuration)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) _navigateWhenReady();
+          });
     _loader.forward();
   }
 
   @override
   void dispose() {
+    _session?.removeListener(_navigateWhenReady);
     _loader.dispose();
     super.dispose();
   }

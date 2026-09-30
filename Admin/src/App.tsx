@@ -28,7 +28,7 @@ const ProtectedRoute: React.FC<{children: React.ReactNode}> = ({children}) => {
     isLoading: isProfileLoading,
     error: profileError,
   } = useQuery({
-    queryKey: ['admin-me'],
+    queryKey: ['admin-me', user?.uid],
     queryFn: () => api<{admin: AdminProfile}>('/v1/admin/me'),
     enabled: Boolean(user),
   });

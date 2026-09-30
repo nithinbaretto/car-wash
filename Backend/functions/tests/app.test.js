@@ -4,6 +4,9 @@ const {once} = require("node:events");
 const app = require("../src/app");
 
 const expectedRoutes = [
+  "post /v1/owner/car-washes/onboarding",
+  "get /v1/owner/car-washes/:carWashId/onboarding",
+  "put /v1/owner/car-washes/:carWashId/onboarding",
   "post /v1/me/owner-enrollment",
   "delete /v1/me/devices/:installationId",
   "get /health",
@@ -42,6 +45,10 @@ const expectedRoutes = [
   "get /v1/admin/audit-logs",
   "post /v1/owner/car-washes",
   "get /v1/owner/car-washes",
+  "get /v1/owner/car-washes/:carWashId/services",
+  "get /v1/owner/car-washes/:carWashId/availability",
+  "get /v1/owner/car-washes/:carWashId/earnings",
+  "post /v1/owner/car-washes/:carWashId/walk-ins",
   "get /v1/owner/car-washes/:carWashId",
   "patch /v1/owner/car-washes/:carWashId",
   "post /v1/owner/car-washes/:carWashId/resubmit",
@@ -78,6 +85,15 @@ test("HTTP middleware and unauthenticated routes preserve their contracts", asyn
     assert.equal(response.status, 401, route);
     assert.equal((await response.json()).error.code, "AUTH_MISSING", route);
   }
+  // Full monthly schedules reach authentication rather than failing JSON parsing.
+  const monthlySchedule = {availability: Array.from({length: 31}, () => ({slots: Array.from({length: 100}, () => ({startAt: "10:00", endAt: "10:30", capacity: 1, enabled: true}))}))};
+  const onboarding = await fetch(`${base}/v1/owner/car-washes/onboarding`, {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(monthlySchedule),
+  });
+  assert.equal(onboarding.status, 401);
+  assert.equal((await onboarding.json()).error.code, "AUTH_MISSING");
+  assert.equal((await fetch(`${base}/api/health`)).status, 200);
+  assert.equal((await fetch(`${base}/api/v1/admin/me`)).status, 401);
   const missing = await fetch(`${base}/missing`);
   assert.equal(missing.status, 404);
   assert.equal((await missing.json()).error.code, "NOT_FOUND");

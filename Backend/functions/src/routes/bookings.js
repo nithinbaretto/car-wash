@@ -86,7 +86,7 @@ router.post("/v1/owner/bookings/:bookingId/status", requireAuth, asyncRoute(asyn
     const allowed = (data.status === "pending" && ["accepted", "rejected"].includes(target)) || (data.status === "accepted" && target === "in_progress") || (data.status === "in_progress" && target === "completed");
     if (!allowed) throw new ApiError(409, "BOOKING_TRANSITION_INVALID", "Booking cannot transition to that status."); const now = admin.firestore.Timestamp.now(); const updates = {status: target, customerListTab: bookingState(target), updatedAt: now, statusUpdatedBy: {uid: request.auth.uid, role: "owner"}, [`${target}At`]: now};
     if (target === "rejected") { const availabilityRef = shop.ref.collection("availability").doc(data.availabilityDate); const availability = await tx.get(availabilityRef); const slots = availability.data().slots || []; const i = slots.findIndex((slot) => slot.startAt === data.slotStartAt); if (i >= 0) slots[i] = {...slots[i], bookedCount: Math.max(0, slots[i].bookedCount - 1)}; tx.update(availabilityRef, {slots, updatedAt: now}); }
-    tx.update(bookingRef, updates); tx.create(db.collection("notifications").doc(), {...notificationForStatus(target, {id: bookingRef.id, carWashSnapshot: data.carWashSnapshot}), recipientUid: data.customerId}); return {...data, ...updates};
+    tx.update(bookingRef, updates); if (data.customerId) tx.create(db.collection("notifications").doc(), {...notificationForStatus(target, {id: bookingRef.id, carWashSnapshot: data.carWashSnapshot}), recipientUid: data.customerId}); return {...data, ...updates};
   });
   response.status(200).json({success: true, data: {booking: bookingSummary(bookingRef.id, booking)}, requestId: request.requestId});
 }));

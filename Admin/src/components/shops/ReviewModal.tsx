@@ -13,10 +13,11 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {CheckCircle2, XCircle, AlertTriangle, RefreshCw} from 'lucide-react';
 import {api} from '../../api/client';
-import {Shop} from '../../types';
+import {Shop, ShopOnboarding} from '../../types';
+import {OnboardingReadiness} from './OnboardingReadiness';
 import {StatusBadge} from '../common/StatusBadge';
 import {useToast} from '../../context/ToastContext';
 
@@ -26,16 +27,22 @@ interface ReviewModalProps {
 }
 
 export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
-  const [decision, setDecision] = useState<'approve' | 'reject' | 'suspend' | 'reactivate'>('approve');
+  const [decision, setDecision] = useState<'approve' | 'reject' | 'suspend' | 'reactivate'>(() => shop.status === 'active' ? 'suspend' : shop.status === 'suspended' ? 'reactivate' : 'approve');
   const [reason, setReason] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const qc = useQueryClient();
   const {showSuccess} = useToast();
 
-  const isPending = shop.status === 'pending_review';
-  const isActive = shop.status === 'active';
-  const isSuspended = shop.status === 'suspended';
+  const {data: detail, isFetching: checkingSetup, error: setupError, refetch: refreshSetup} = useQuery({
+    queryKey: ['shop', shop.id],
+    queryFn: () => api<{carWash: Shop; onboarding: ShopOnboarding}>(`/v1/admin/car-washes/${shop.id}`),
+    refetchOnMount: 'always',
+  });
+  const currentShop = detail?.carWash || shop;
+  const isPending = currentShop.status === 'pending_review';
+  const isActive = currentShop.status === 'active';
+  const isSuspended = currentShop.status === 'suspended';
 
   // Allowed transitions
   const allowedDecisions = isPending
@@ -53,7 +60,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
     mutationFn: async () => {
       const payload: any = {
         decision,
-        expectedUpdatedAt: shop.updatedAt,
+        expectedUpdatedAt: currentShop.updatedAt && typeof currentShop.updatedAt !== 'string' ? {
+          seconds: currentShop.updatedAt.seconds ?? currentShop.updatedAt._seconds,
+          nanoseconds: currentShop.updatedAt.nanoseconds ?? currentShop.updatedAt._nanoseconds ?? 0,
+        } : undefined,
       };
       if (decision !== 'approve') {
         payload.reason = reason.trim();
@@ -67,26 +77,31 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
       qc.invalidateQueries({queryKey: ['shops']});
       qc.invalidateQueries({queryKey: ['shop', shop.id]});
       qc.invalidateQueries({queryKey: ['dashboard']});
+      qc.invalidateQueries({queryKey: ['audit']});
       showSuccess(`Shop "${shop.name}" status updated to ${decision}.`);
       onClose();
     },
     onError: (err: any) => {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to update shop review.');
+      qc.invalidateQueries({queryKey: ['shop', shop.id]});
     },
   });
 
   const requiresReason = decision !== 'approve';
-  const isConfirmDisabled =
-    reviewMutation.isPending || (requiresReason && reason.trim().length < 3);
+  const needsCompleteSetup = decision === 'approve' || decision === 'reactivate';
+  const isConfirmDisabled = reviewMutation.isPending || checkingSetup || currentShop.status === 'rejected' ||
+    !allowedDecisions.some((option) => option.value === decision) ||
+    (needsCompleteSetup && (Boolean(setupError) || detail?.onboarding?.complete !== true)) ||
+    (requiresReason && reason.trim().length < 2) || reason.trim().length > 500;
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={reviewMutation.isPending ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{pb: 1}}>
         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <Typography variant="h6" sx={{fontWeight: 700}}>
-            Shop Review: {shop.name}
+            Shop Review: {currentShop.name}
           </Typography>
-          <StatusBadge status={shop.status} />
+          <StatusBadge status={currentShop.status} />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{mt: 0.5}}>
           Shop ID: {shop.id}
@@ -95,7 +110,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
 
       <DialogContent dividers sx={{py: 2.5}}>
         <Stack spacing={2.5}>
-          {shop.address?.formattedAddress && (
+          {needsCompleteSetup && <OnboardingReadiness onboarding={detail?.onboarding} loading={checkingSetup} error={setupError} onRetry={() => { void refreshSetup(); }} />}
+          {currentShop.review?.reason && <Alert severity="info">Previous review: {currentShop.review.reason}</Alert>}
+          {currentShop.status === 'rejected' && <Alert severity="info">The owner needs to correct and resubmit this application before it can be approved.</Alert>}
+          {currentShop.address?.formattedAddress && (
             <Box
               sx={{
                 p: 1.5,
@@ -108,7 +126,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
                 LOCATION
               </Typography>
               <Typography variant="body2" sx={{fontWeight: 500, mt: 0.25}}>
-                {shop.address.formattedAddress}
+                {currentShop.address.formattedAddress}
               </Typography>
             </Box>
           )}
@@ -138,13 +156,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({shop, onClose}) => {
           {requiresReason && (
             <TextField
               label="Audit Reason"
-              placeholder="State the regulatory or operational reason for this action..."
+              placeholder="Explain what the owner needs to correct or why the shop status is changing..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               multiline
               minRows={3}
               required
-              helperText="Reason is recorded into compliance audit logs (min 3 characters)."
+              helperText="The owner can see this reason. It is also saved in the audit log (2–500 characters)."
               fullWidth
             />
           )}

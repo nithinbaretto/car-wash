@@ -1,5 +1,5 @@
 import {initializeApp} from 'firebase/app';
-import {getAuth, setPersistence, browserSessionPersistence} from 'firebase/auth';
+import {getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence} from 'firebase/auth';
 
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -10,3 +10,7 @@ const config = {
 export const firebaseEnabled = Object.values(config).every(Boolean);
 export const auth = firebaseEnabled ? getAuth(initializeApp(config)) : null;
 export async function useSessionPersistence() { if (auth) await setPersistence(auth, browserSessionPersistence); }
+
+if (auth && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL) {
+  connectAuthEmulator(auth, import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL);
+}

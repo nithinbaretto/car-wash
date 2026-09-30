@@ -11,7 +11,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {useApiList} from '../hooks/useApiList';
+import {LoadMore} from '../components/common/LoadMore';
 import {Link} from 'react-router-dom';
 import {
   Store,
@@ -41,11 +42,10 @@ export const Approvals: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['shops', {status: 'pending_review'}],
-    queryFn: () => api<{carWashes: Shop[]}>('/v1/admin/car-washes?status=pending_review&limit=50'),
-    refetchInterval: 30000,
-  });
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useApiList<Shop, 'carWashes'>('shops', '/v1/admin/car-washes', 'carWashes', {status: 'pending_review'}, 30000);
 
   const pendingShops = data?.carWashes || [];
 
@@ -53,7 +53,7 @@ export const Approvals: React.FC = () => {
     <Box>
       <PageHeader
         title="Partner Approval Queue"
-        subtitle="Review new car wash studio onboardings, verify operating licenses, and activate hubs."
+        subtitle="Review shop details, services and booking availability before activating a car wash."
         breadcrumbs={[{label: 'Overview', path: '/'}, {label: 'Approvals'}]}
         action={
           <Button
@@ -104,7 +104,7 @@ export const Approvals: React.FC = () => {
             Approval Queue Is Clear!
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{maxWidth: 440, mx: 'auto', mt: 1}}>
-            All submitted partner studios have been verified and processed. New vendor onboardings will automatically surface here.
+            No applications are waiting for review. New submissions and corrected applications will appear here.
           </Typography>
           <Button
             component={Link}
@@ -211,6 +211,8 @@ export const Approvals: React.FC = () => {
           ))}
         </Grid>
       )}
+
+      <LoadMore hasMore={hasNextPage} loading={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} />
 
       {selectedShop && (
         <ReviewModal shop={selectedShop} onClose={() => setSelectedShop(null)} />

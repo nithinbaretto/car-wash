@@ -18,7 +18,8 @@ import {
   Stack,
   IconButton,
 } from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {useApiList} from '../hooks/useApiList';
+import {LoadMore} from '../components/common/LoadMore';
 import {useSearchParams, Link} from 'react-router-dom';
 import {
   CalendarCheck,
@@ -57,10 +58,10 @@ export const Bookings: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['bookings', filters],
-    queryFn: () => api<{bookings: Booking[]}>(`/v1/admin/bookings${query(filters)}`),
-  });
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useApiList<Booking, 'bookings'>('bookings', '/v1/admin/bookings', 'bookings', filters);
 
   const bookings = data?.bookings || [];
 
@@ -304,6 +305,8 @@ export const Bookings: React.FC = () => {
           </TableContainer>
         )}
       </Card>
+      <LoadMore hasMore={hasNextPage} loading={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} />
+
     </Box>
   );
 };

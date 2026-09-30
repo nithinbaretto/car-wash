@@ -17,7 +17,8 @@ import {
   InputAdornment,
   Stack,
 } from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {useApiList} from '../hooks/useApiList';
+import {LoadMore} from '../components/common/LoadMore';
 import {useSearchParams} from 'react-router-dom';
 import {
   ShieldCheck,
@@ -56,10 +57,10 @@ export const AuditLogs: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['audit', filters],
-    queryFn: () => api<{auditLogs: AuditLog[]}>(`/v1/admin/audit-logs${query(filters)}`),
-  });
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useApiList<AuditLog, 'auditLogs'>('audit', '/v1/admin/audit-logs', 'auditLogs', filters);
 
   const logs = data?.auditLogs || [];
 
@@ -244,6 +245,8 @@ export const AuditLogs: React.FC = () => {
           </TableContainer>
         )}
       </Card>
+      <LoadMore hasMore={hasNextPage} loading={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} />
+
     </Box>
   );
 };

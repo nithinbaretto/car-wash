@@ -26,6 +26,12 @@ class _CarWashAppState extends State<CarWashApp> {
   final AppSession _session = AppSession();
 
   @override
+  void initState() {
+    super.initState();
+    _session.init();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SessionScope(
       session: _session,

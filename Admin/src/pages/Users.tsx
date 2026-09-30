@@ -19,7 +19,8 @@ import {
   Stack,
   IconButton,
 } from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {useApiList} from '../hooks/useApiList';
+import {LoadMore} from '../components/common/LoadMore';
 import {useSearchParams, Link} from 'react-router-dom';
 import {
   Users as UsersIcon,
@@ -60,10 +61,10 @@ export const Users: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['users', filters],
-    queryFn: () => api<{users: User[]}>(`/v1/admin/users${query(filters)}`),
-  });
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useApiList<User, 'users'>('users', '/v1/admin/users', 'users', filters);
 
   const users = data?.users || [];
 
@@ -305,6 +306,8 @@ export const Users: React.FC = () => {
           </TableContainer>
         )}
       </Card>
+      <LoadMore hasMore={hasNextPage} loading={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} />
+
     </Box>
   );
 };

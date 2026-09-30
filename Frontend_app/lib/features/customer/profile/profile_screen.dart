@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/user_role.dart';
 import '../../../core/services/app_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../auth/role_screen.dart';
 import '../../vendor/vendor_shell.dart';
-import '../../../core/theme/app_typography.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -14,8 +14,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = SessionScope.of(context);
-    final name = session.name.isEmpty ? 'Raghavendra' : session.name;
-    final phone = session.phone.isEmpty ? '8865745553' : session.phone;
+    final name = session.user?.displayName.isNotEmpty == true
+        ? session.user!.displayName
+        : (session.name.isNotEmpty ? session.name : 'Customer');
+    final phone = session.user?.phoneNumber != null
+        ? session.user!.phoneNumber!
+        : (session.phone.isNotEmpty ? session.phone : '');
     final initial = name.characters.first.toUpperCase();
 
     return SafeArea(
@@ -24,16 +28,16 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'Profile',
-                style: AppText.display(size: 28),
-              ),
+              Text('Profile', style: AppText.display(size: 28)),
               const Spacer(),
-              Text(
-                'Edit',
-                style: GoogleFonts.figtree(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+              InkWell(
+                onTap: () => _editProfile(context, session, name),
+                child: Text(
+                  'Edit',
+                  style: GoogleFonts.figtree(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -55,37 +59,134 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Center(
-            child: Text(name, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w700)),
+            child: Text(
+              name,
+              style: GoogleFonts.figtree(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           Center(
-            child: Text('+91 $phone', style: GoogleFonts.figtree(color: AppColors.muted)),
+            child: Text(
+              phone.isEmpty
+                  ? 'Phone unavailable'
+                  : (phone.startsWith('+') ? phone : '+91 $phone'),
+              style: GoogleFonts.figtree(color: AppColors.muted),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                session.user?.isOwner == true
+                    ? 'Verified Customer & Owner'
+                    : 'Verified Customer',
+                style: GoogleFonts.figtree(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDeep,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
-          _tile(Icons.person_outline, 'Personal information', () {}),
-          _tile(Icons.directions_car_outlined, 'My vehicles', () {}),
-          _tile(Icons.support_agent_outlined, 'Support', () {}),
+          _tile(Icons.person_outline, 'Personal information', () {
+            _editProfile(context, session, name);
+          }),
           _tile(
             Icons.storefront_outlined,
-            'I own a Car Wash',
-            () {
-              session.selectRole(UserRole.vendor);
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                VendorShell.route,
-                (route) => false,
-              );
+            session.user?.isOwner == true
+                ? 'Switch to Vendor Board'
+                : 'I own a Car Wash (Become Vendor)',
+            () async {
+              try {
+                await session.switchRole(UserRole.vendor);
+                await session.loadOwnerShops();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    VendorShell.route,
+                    (route) => false,
+                  );
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Unable to switch role. Please try again.'),
+                    ),
+                  );
+                }
+              }
             },
           ),
-          _tile(Icons.description_outlined, 'Terms and Conditions', () {}),
-          _tile(
-            Icons.logout,
-            'Logout',
-            () {
-              session.logout();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                RoleScreen.route,
-                (route) => false,
-              );
+          _tile(Icons.description_outlined, 'Terms and Conditions', () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Accepted Terms Version: v1')),
+            );
+          }),
+          _tile(Icons.logout, 'Logout', () async {
+            await session.logout();
+            if (context.mounted) {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(RoleScreen.route, (route) => false);
+            }
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _editProfile(
+    BuildContext context,
+    AppSession session,
+    String currentName,
+  ) {
+    final controller = TextEditingController(text: currentName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Display Name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.length >= 2) {
+                try {
+                  final updated = await session.userApi.updateProfile(
+                    displayName: newName,
+                  );
+                  session.updateCurrentUser(updated);
+                } catch (_) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Unable to save profile. Please try again.',
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                }
+              }
+              if (ctx.mounted) Navigator.of(ctx).pop();
             },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -97,8 +198,15 @@ class ProfileScreen extends StatelessWidget {
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: AppColors.ink),
-      title: Text(label, style: GoogleFonts.figtree(fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.mutedLight),
+      title: Text(
+        label,
+        style: GoogleFonts.figtree(fontWeight: FontWeight.w500),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right,
+        size: 18,
+        color: AppColors.mutedLight,
+      ),
     );
   }
 }
